@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  kinfit-cmd3:
+    image: ssgribanov/kinfit-cmd3
+    user: "1000:984"
+    ports:
+      - "8765:8765"
