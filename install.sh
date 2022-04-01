@@ -29,6 +29,5 @@ make -j8
 make install
 
 cd $HOME/workdir
-mv $HOME/yadisk.py .
 python yadisk.py https://disk.yandex.ru/d/YKwqyx-GlnNRVQ -p $HOME/workdir
 tar -xvf kfcmd_data.tar
