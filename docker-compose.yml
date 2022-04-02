@@ -5,3 +5,9 @@ services:
     user: "1000:984"
     ports:
       - "8765:8765"
+    volumes:
+      - "kinfit-cmd3-data:/var/kinfit"
+
+volumes:
+    kinfit-cmd3-data:
+        external: false

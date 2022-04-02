@@ -1,3 +1,5 @@
+pip install -U requests
+
 export SOURCE_DIR=$HOME/source
 export BUILD_DIR=$HOME/build
 mkdir $SOURCE_DIR
@@ -27,7 +29,3 @@ cd $BUILD_DIR/KFCmd5PiTest
 cmake -DCMAKE_CXX_STANDARD=17 -DCMAKE_INSTALL_PREFIX=$PKG_DIR/KFCmd5PiTest $SOURCE_DIR/KFCmd5PiTest
 make -j8
 make install
-
-cd $HOME/workdir
-python yadisk.py https://disk.yandex.ru/d/YKwqyx-GlnNRVQ -p $HOME/workdir
-tar -xvf kfcmd_data.tar

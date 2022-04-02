@@ -3,12 +3,15 @@ FROM ssgribanov/hep-env:latest
 MAINTAINER Sergei Gribanov <ssgribanov@gmail.com>
 
 USER $USER
-COPY yadisk.py /home/$USER/workdir/yadisk.py
 COPY utils   /home/$USER/workdir/utils
-COPY --chown=hep:hep notebooks /home/$USER/workdir/notebooks
+COPY --chown=$USER:$USER notebooks /home/$USER/workdir/notebooks
+COPY --chown=$USER:$USER download_data.ipynb /home/$USER/workdir/download_data.ipynb
 ENV PYTHONPATH /home/$USER/workdir/utils:$PYTHONPATH
 COPY install.sh install.sh
 RUN sh install.sh
+USER 0
+RUN mkdir /var/kinfit && chown $USER:$USER /var/kinfit
+USER $USER
 EXPOSE 8765
 
 CMD [ "/bin/bash" ]
