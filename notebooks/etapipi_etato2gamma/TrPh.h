@@ -11,7 +11,7 @@
 #include <vector>
 #include <kfcmd/core/TrPh.hpp>
 
-class TrPh : public KFCmd::TrPh {
+class TrPh : public kfcmd::core::TrPh {
  public:
   TrPh(TTree* tree = 0);
   virtual ~TrPh();

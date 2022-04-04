@@ -16,7 +16,7 @@ const double TrPh::maxTPtot_ = 1000;
 const double TrPh::minPhEn_ = 20;
 const double TrPh::maxPhEn_ = 1000;
 
-TrPh::TrPh(TTree* tree) : KFCmd::TrPh(tree) {}
+TrPh::TrPh(TTree* tree) : kfcmd::core::TrPh(tree) {}
 
 TrPh::~TrPh() {}
 
@@ -78,7 +78,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
   TTree* out_tree = new TTree("kf_data", "");
   setupOutptuBranches_(out_tree);
   fChain->GetEntry(0);
-  KFCmd::Hypo2ChPions2Photons hypo(2 * emeas, magneticField);
+  kfcmd::hypos::Hypo2ChPions2Photons hypo(2 * emeas, magneticField);
   double tchi2;
   int errCode;
   in_mgg_ = 0;
@@ -93,7 +93,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nb = fChain->GetEntry(jentry);
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
-    hypo..setBeamXY(xbeam, ybeam);
+    hypo.setBeamXY(xbeam, ybeam);
     kf_err_ = 1;
     if (!hypo.fillTrack("pi-", trackIndices_[0], *this)) continue;
     if (!hypo.fillTrack("pi+", trackIndices_[1], *this)) continue;
