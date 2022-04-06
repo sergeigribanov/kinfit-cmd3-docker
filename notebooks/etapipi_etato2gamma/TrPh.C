@@ -60,7 +60,7 @@ Int_t TrPh::Cut(Long64_t entry) {
 
 void TrPh::setupOutptuBranches_(TTree* tree) {
   tree->Branch("kf_err", &kf_err_, "kf_err/I");
-  tree->Branch("kf_chi2", &kf_chi2_, "kf_mgg/D");
+  tree->Branch("kf_chi2", &kf_chi2_, "kf_chi2/D");
   tree->Branch("in_mgg", &in_mgg_, "in_mgg/D");
   tree->Branch("kf_mgg", &kf_mgg_, "kf_mgg/D");
   tree->Branch("in_mpipi", &in_mpipi_, "in_mpipi/D");
@@ -68,10 +68,21 @@ void TrPh::setupOutptuBranches_(TTree* tree) {
   tree->Branch("kf_vtx_x", &kf_vtx_x_, "kf_vtx_x/D");
   tree->Branch("kf_vtx_y", &kf_vtx_y_, "kf_vtx_y/D");
   tree->Branch("kf_vtx_z", &kf_vtx_z_, "kf_vtx_z/D");
+
+  tree->Branch("in_total_px_", &in_total_px_, "in_total_px/D");
+  tree->Branch("in_total_py_", &in_total_py_, "in_total_py/D");
+  tree->Branch("in_total_pz_", &in_total_pz_, "in_total_pz/D");
+  tree->Branch("in_total_pe_", &in_total_pe_, "in_total_pe/D");
+
+  tree->Branch("kf_total_px_", &kf_total_px_, "kf_total_px/D");
+  tree->Branch("kf_total_py_", &kf_total_py_, "kf_total_py/D");
+  tree->Branch("kf_total_pz_", &kf_total_pz_, "kf_total_pz/D");
+  tree->Branch("kf_total_pe_", &kf_total_pe_, "kf_total_pe/D");
 }
 
 void TrPh::Loop(const std::string& outpath, double magneticField) {
   if (fChain == 0) return;
+  const std::set<std::string> sAll = {"pi+", "pi-", "g0", "g1"};
   const std::set<std::string> sGG = {"g0", "g1"};
   const std::set<std::string> sPiPi = {"pi+", "pi-"};
   auto outfl = TFile::Open(outpath.c_str(), "recreate");
@@ -81,10 +92,6 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
   kfcmd::hypos::Hypo2ChPions2Photons hypo(2 * emeas, magneticField);
   double tchi2;
   int errCode;
-  in_mgg_ = 0;
-  kf_mgg_ = 0;
-  in_mpipi_ = 0;
-  kf_mpipi_ = 0;
   Long64_t nentries = fChain->GetEntriesFast();
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
@@ -94,9 +101,17 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
     hypo.setBeamXY(xbeam, ybeam);
+    hypo.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
+    hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
     kf_err_ = 1;
-    if (!hypo.fillTrack("pi-", trackIndices_[0], *this)) continue;
-    if (!hypo.fillTrack("pi+", trackIndices_[1], *this)) continue;
+    if (!hypo.fillTrack("pi-", trackIndices_[0], *this)) {
+      out_tree->Fill();
+      continue;
+    }
+    if (!hypo.fillTrack("pi+", trackIndices_[1], *this)) {
+      out_tree->Fill();
+      continue;
+    }
     kf_chi2_ = std::numeric_limits<double>::infinity();
     for (std::size_t iph = 0; iph + 1 < photonIndices_.size(); ++iph) {
       if (!hypo.fillPhoton("g0", photonIndices_[iph], *this)) continue;
@@ -109,6 +124,16 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
         if (tchi2 < kf_chi2_) {
           kf_err_ = 0;
           kf_chi2_ = tchi2;
+          auto inP = hypo.getInitialMomentum(sAll);
+          auto kfP = hypo.getFinalMomentum(sAll);
+          in_total_px_ = inP.Px();
+          in_total_py_ = inP.Py();
+          in_total_pz_ = inP.Pz();
+          in_total_pe_ = inP.E();
+          kf_total_px_ = kfP.Px();
+          kf_total_py_ = kfP.Py();
+          kf_total_pz_ = kfP.Pz();
+          kf_total_pe_ = kfP.E();
           in_mgg_ = hypo.getInitialMomentum(sGG).M();
           kf_mgg_ = hypo.getFinalMomentum(sGG).M();
           in_mpipi_ = hypo.getInitialMomentum(sPiPi).M();
