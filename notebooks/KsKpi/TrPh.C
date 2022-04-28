@@ -7,9 +7,6 @@
 
 #include <TStopwatch.h>
 
-#include <kfcmd/hypos/Hypo3ChPionsKPlus.hpp>
-#include <kfcmd/hypos/Hypo3ChPionsKMinus.hpp>
-
 #include "TrPh.h"
 
 const double TrPh::dZ_ = 30;
@@ -18,6 +15,7 @@ const double TrPh::mindEdX_ = 0;
 const double TrPh::maxdEdX_ = 15000;
 const double TrPh::minTPtot_ = 5;
 const double TrPh::maxTPtot_ = 1000;
+const std::set<std::string> TrPh::decaypds_ = {"pi-_1", "pi+_1"};
 
 TrPh::TrPh(TTree *tree) :
   kfcmd::core::TrPh(tree) {
@@ -52,10 +50,49 @@ Int_t TrPh::Cut(Long64_t) {
   return 1;
 }
 
-void TrPh::setupOutptuBranches_(TTree* tree) {
+double TrPh::getAngle_(const kfhypos::HypoKsKPlusPiMinus_NoKsMass &hypo) const {
+  // auto dv = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  auto dv = hypo.getFinalMomentum("ks").Vect();
+  // auto p = hypo.getFinalMomentum(decaypds_).Vect();
+  auto p = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  return dv.Angle(p);
+}
+
+double TrPh::getAngle_(const kfhypos::HypoKsKMinusPiPlus_NoKsMass &hypo) const {
+  // auto dv = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  auto dv = hypo.getFinalMomentum("ks").Vect();
+  // auto p = hypo.getFinalMomentum(decaypds_).Vect();
+  auto p = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  return dv.Angle(p);
+}
+
+void TrPh::setupOutputBranches_(TTree* tree) {
+  tree->Branch("evnum", &evnum, "evnum/I");
+  tree->Branch("kf_err", &kf_err_, "kf_err/I");
+  tree->Branch("kf_chi2", &kf_chi2_, "kf_chi2/D");
+
+  tree->Branch("kf_ks_px", &kf_ks_px_, "kf_ks_px/D");
+  tree->Branch("kf_ks_py", &kf_ks_py_, "kf_ks_py/D");
+  tree->Branch("kf_ks_pz", &kf_ks_pz_, "kf_ks_pz/D");
+  tree->Branch("kf_ks_pe", &kf_ks_pe_, "kf_ks_pe/D");
+
+  tree->Branch("kf_ks_vc_x", &kf_ks_vc_x_, "kf_ks_vc_x/D");
+  tree->Branch("kf_ks_vc_y", &kf_ks_vc_y_, "kf_ks_vc_y/D");
+  tree->Branch("kf_ks_vc_z", &kf_ks_vc_z_, "kf_ks_vc_z/D");
+
+  tree->Branch("in_tks", &in_tks_, "in_tks/D");
+  tree->Branch("kf_tks", &kf_tks_, "kf_tks/D");
   tree->Branch("kf_mks", &kf_mks_, "kf_mks/D");
   tree->Branch("in_mks", &in_mks_, "in_mks/D");
-  tree->Branch("kf_chi2", &kf_chi2_, "kf_chi2/D");
+  tree->Branch("sim_vtx_dr", &sim_vtx_dr_, "sim_vtx_dr/D");
+  tree->Branch("sim_vtx_drho", &sim_vtx_drho_, "sim_vtx_drho/D");
+  tree->Branch("kf_ks_decay_prod_angle",
+               &kf_ks_decay_prod_angle_,
+               "kf_ks_decay_prod_angle/D");
+  tree->Branch("kf_hypo", &kf_hypo_, "kf_hypo/I");
+  tree->Branch("sim_hypo", &sim_hypo_, "sim_hypo/I");
+  tree->Branch("sim_ee_vtx", sim_ee_vtx_, "sim_ee_vtx[3]/D");
+  tree->Branch("sim_ks_vtx", sim_ks_vtx_, "sim_ks_vtx[3]/D");
   tree->Branch("kf_vtx0_x", &kf_vtx0_x_, "kf_vtx0_x/D");
   tree->Branch("kf_vtx0_y", &kf_vtx0_y_, "kf_vtx0_y/D");
   tree->Branch("kf_vtx0_z", &kf_vtx0_z_, "kf_vtx0_z/D");
@@ -70,6 +107,39 @@ void TrPh::setupOutptuBranches_(TTree* tree) {
   tree->Branch("kf_p_vtx0_K", &kf_p_vtx0_K_, "kf_p_vtx0_K/D");
   tree->Branch("kf_p_vtx0_pi", &kf_p_vtx0_pi_, "kf_p_vtx0_pi/D");
   tree->Branch("kf_p_vtx1_pi", kf_p_vtx1_pi_, "kf_p_vtx1_pi[2]/D");
+}
+
+void TrPh::fillSimInfo_() {
+  sim_hypo_ = -1;
+  for (int i = 0; i < nsim; ++i) {
+    switch (simorig[i]) {
+    case 0:
+      sim_ee_vtx_[0] = simvtx[i];
+      sim_ee_vtx_[1] = simvty[i];
+      sim_ee_vtx_[2] = simvtz[i];
+      switch (simtype[i]) {
+      case 321:
+        sim_hypo_ = 0;
+        break;
+      case -321:
+        sim_hypo_ = 1;
+        break;
+      default:
+        break;
+      }
+      break;
+    case 310:
+      sim_ks_vtx_[0] = simvtx[i];
+      sim_ks_vtx_[1] = simvty[i];
+      sim_ks_vtx_[2] = simvtz[i];
+      break;
+    default:
+      break;
+    }
+  }
+  auto dvtx = TVector3(sim_ks_vtx_) - TVector3(sim_ee_vtx_);
+  sim_vtx_dr_ = dvtx.Mag();
+  sim_vtx_drho_ = dvtx.Perp();
 }
 
 int TrPh::getStatus_() const {
@@ -114,21 +184,40 @@ void TrPh::printSummary_(int* npassed, int ncutted, int nentries) {
 void TrPh::Loop(const std::string& outpath, double magneticField) {
   if (fChain == 0) return;
   time_.Start();
-  std::set<std::string> sKs = {"pi+_0", "pi-_0"};
+  std::set<std::string> sKs = {"pi+_1", "pi-_1"};
   auto outfl = TFile::Open(outpath.c_str(), "recreate");
   TTree* out_tree = new TTree("kf_data", "");
-  setupOutptuBranches_(out_tree);
+  setupOutputBranches_(out_tree);
   fChain->GetEntry(0);
-  kfcmd::hypos::Hypo3ChPionsKPlus hypo_plus(2 * emeas, magneticField);
-  hypo_plus.setBeamXY(xbeam, ybeam);
-  hypo_plus.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-  hypo_plus.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
-  kfcmd::hypos::Hypo3ChPionsKMinus hypo_minus(2 * emeas, magneticField);
-  hypo_minus.setBeamXY(xbeam, ybeam);
-  hypo_minus.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-  hypo_minus.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+  kfcmd::hypos::HypoKsKPlusPiMinus_NoKsMass hypo_plus(2.e-3 * emeas, magneticField);
+  kfcmd::hypos::HypoKsKMinusPiPlus_NoKsMass hypo_minus(2.e-3 * emeas, magneticField);
   Long64_t nentries = fChain->GetEntriesFast();
   Long64_t nbytes = 0, nb = 0;
+
+  double kf_ks_prod_angle_plus = 0;
+  double kf_ks_prod_angle_minus = 0;
+
+  double in_tks_plus = 0;
+  double kf_tks_plus = 0;
+  double in_tks_minus = 0;
+  double kf_tks_minus = 0;
+
+  double kf_ks_px_plus = 0;
+  double kf_ks_py_plus = 0;
+  double kf_ks_pz_plus = 0;
+  double kf_ks_pe_plus = 0;
+  double kf_ks_vc_x_plus = 0;
+  double kf_ks_vc_y_plus = 0;
+  double kf_ks_vc_z_plus = 0;
+
+  double kf_ks_px_minus = 0;
+  double kf_ks_py_minus = 0;
+  double kf_ks_pz_minus = 0;
+  double kf_ks_pe_minus = 0;
+  double kf_ks_vc_x_minus = 0;
+  double kf_ks_vc_y_minus = 0;
+  double kf_ks_vc_z_minus = 0;
+
   double kf_chi2_plus;
   double tchi2_plus;
   double kf_chi2_minus;
@@ -169,6 +258,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nb = fChain->GetEntry(jentry);
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
+    kf_err_ = 1;
+    kf_hypo_ = -1;
     ncutted++;
     hypo_plus.setBeamXY(xbeam, ybeam);
     hypo_plus.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
@@ -181,64 +272,103 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     kf_chi2_plus = std::numeric_limits<double>::infinity();
     kf_chi2_minus = std::numeric_limits<double>::infinity();
     for (int im = 0; im < 2; ++im) {
-      if (!hypo_plus.fillTrack("pi-_0", trackIndices_[im], *this)) continue;
-      if (!hypo_plus.fillTrack("pi-_1", trackIndices_[1 - im], *this)) continue;
+      if (!hypo_plus.fillTrack("pi-_1", trackIndices_[im], *this)) continue;
+      if (!hypo_plus.fillTrack("pi-_0", trackIndices_[1 - im], *this)) continue;
       for (int ip = 2; ip < 4; ++ip) {
-        if (!hypo_plus.fillTrack("pi+_0", trackIndices_[ip], *this)) continue;
+        if (!hypo_plus.fillTrack("pi+_1", trackIndices_[ip], *this)) continue;
         if (!hypo_plus.fillTrack("k+", trackIndices_[5 - ip], *this)) continue;
+        // std::cout << "________ opt plus __________" << std::endl;
+        auto ks_im = hypo_plus.getInitialMomentum("pi-_1") + hypo_plus.getInitialMomentum("pi+_1");
+        Eigen::VectorXd tmpv(4);
+        tmpv << ks_im.Px(), ks_im.Py(), ks_im.Pz(), 1.e-3;
+        hypo_plus.setInitialParticleParams("ks", tmpv);
         hypo_plus.optimize();
         errCode = hypo_plus.getErrorCode();
         if (errCode != 0) continue;
+        kf_err_ = 0;
         tchi2_plus = hypo_plus.getChiSquare();
         if (tchi2_plus < kf_chi2_plus) {
           flag_plus = true;
           kf_chi2_plus = tchi2_plus;
-          v_in_mks_plus = hypo_plus.getInitialMomentum(sKs).M();
-          v_kf_mks_plus = hypo_plus.getFinalMomentum(sKs).M();
+
+          in_tks_plus = hypo_plus.getInitialParameters("ks")(3);
+          kf_tks_plus = hypo_plus.getFinalParameters("ks")(3);
+          auto ksP = hypo_plus.getFinalMomentum("ks");
+          kf_ks_px_plus = ksP.Px();
+          kf_ks_py_plus = ksP.Py();
+          kf_ks_pz_plus = ksP.Pz();
+          kf_ks_pe_plus = ksP.E();
           v_vtx0_plus = hypo_plus.getFinalVertex("vtx0");
           v_vtx1_plus = hypo_plus.getFinalVertex("vtx1");
-
+          auto kf_ks_vc = v_vtx0_plus + ksP.Vect() * kf_tks_plus - v_vtx1_plus;
+          kf_ks_vc_x_plus = kf_ks_vc.X();
+          kf_ks_vc_y_plus = kf_ks_vc.Y();
+          kf_ks_vc_z_plus = kf_ks_vc.Z();
+          kf_ks_prod_angle_plus = getAngle_(hypo_plus);
+          v_in_mks_plus = hypo_plus.getInitialMomentum(sKs).M();
+          v_kf_mks_plus = hypo_plus.getFinalMomentum(sKs).M();
           v_dedx_vtx0_k_plus = tdedx[trackIndices_[5 - ip]];
           v_p_vtx0_k_plus = hypo_plus.getFinalMomentum("k+").P();
           v_dedx_vtx1_pi_plus[0] = tdedx[trackIndices_[im]];
           v_dedx_vtx1_pi_plus[1] = tdedx[trackIndices_[ip]];
-          v_p_vtx1_pi_plus[0] = hypo_plus.getFinalMomentum("pi-_0").P();
-          v_p_vtx1_pi_plus[1] = hypo_plus.getFinalMomentum("pi+_0").P();
+          v_p_vtx1_pi_plus[0] = hypo_plus.getFinalMomentum("pi-_1").P();
+          v_p_vtx1_pi_plus[1] = hypo_plus.getFinalMomentum("pi+_1").P();
           v_dedx_vtx0_pi_plus = tdedx[trackIndices_[1 - im]];
-          v_p_vtx0_pi_plus = hypo_plus.getFinalMomentum("pi-_1").P();
+          v_p_vtx0_pi_plus = hypo_plus.getFinalMomentum("pi-_0").P();
         }
       }
     }
 
     for (int im = 0; im < 2; ++im) {
-      if (!hypo_minus.fillTrack("pi-_0", trackIndices_[im], *this)) continue;
+      if (!hypo_minus.fillTrack("pi-_1", trackIndices_[im], *this)) continue;
       if (!hypo_minus.fillTrack("k-", trackIndices_[1 - im], *this)) continue;
       for (int ip = 2; ip < 4; ++ip) {
-        if (!hypo_minus.fillTrack("pi+_0", trackIndices_[ip], *this)) continue;
-        if (!hypo_minus.fillTrack("pi+_1", trackIndices_[5 - ip], *this)) continue;
+        if (!hypo_minus.fillTrack("pi+_1", trackIndices_[ip], *this)) continue;
+        if (!hypo_minus.fillTrack("pi+_0", trackIndices_[5 - ip], *this)) continue;
+        // std::cout << "________ opt minus __________" << std::endl;
+        auto ks_im = hypo_minus.getInitialMomentum("pi-_1") +
+                     hypo_minus.getInitialMomentum("pi+_1");
+        Eigen::VectorXd tmpv(4);
+        tmpv << ks_im.Px(), ks_im.Py(), ks_im.Pz(), 1.e-3;
+        hypo_minus.setInitialParticleParams("ks", tmpv);
         hypo_minus.optimize();
         errCode = hypo_minus.getErrorCode();
         if (errCode != 0) continue;
+        kf_err_ = 0;
         tchi2_minus = hypo_minus.getChiSquare();
         if (tchi2_minus < kf_chi2_minus) {
           flag_minus = true;
           kf_chi2_minus = tchi2_minus;
-          v_in_mks_minus = hypo_minus.getInitialMomentum(sKs).M();
-          v_kf_mks_minus = hypo_minus.getFinalMomentum(sKs).M();
+
+          auto ksP = hypo_minus.getFinalMomentum("ks");
+          kf_ks_px_minus = ksP.Px();
+          kf_ks_py_minus = ksP.Py();
+          kf_ks_pz_minus = ksP.Pz();
+          kf_ks_pe_minus = ksP.E();
+          in_tks_minus = hypo_minus.getInitialParameters("ks")(3);
+          kf_tks_minus = hypo_minus.getFinalParameters("ks")(3);
           v_vtx0_minus = hypo_minus.getFinalVertex("vtx0");
           v_vtx1_minus = hypo_minus.getFinalVertex("vtx1");
-
+          auto kf_ks_vc = v_vtx0_minus + ksP.Vect() * kf_tks_minus - v_vtx1_minus;
+          kf_ks_vc_x_minus = kf_ks_vc.X();
+          kf_ks_vc_y_minus = kf_ks_vc.Y();
+          kf_ks_vc_z_minus = kf_ks_vc.Z();
+          kf_ks_prod_angle_minus = getAngle_(hypo_minus);
+          v_in_mks_minus = hypo_minus.getInitialMomentum(sKs).M();
+          v_kf_mks_minus = hypo_minus.getFinalMomentum(sKs).M();
           v_dedx_vtx0_k_minus = tdedx[trackIndices_[1 - im]];
           v_p_vtx0_k_minus = hypo_minus.getFinalMomentum("k-").P();
           v_dedx_vtx1_pi_minus[0] = tdedx[trackIndices_[im]];
           v_dedx_vtx1_pi_minus[1] = tdedx[trackIndices_[ip]];
-          v_p_vtx1_pi_minus[0] = hypo_minus.getFinalMomentum("pi-_0").P();
-          v_p_vtx1_pi_minus[1] = hypo_minus.getFinalMomentum("pi+_0").P();
+          v_p_vtx1_pi_minus[0] = hypo_minus.getFinalMomentum("pi-_1").P();
+          v_p_vtx1_pi_minus[1] = hypo_minus.getFinalMomentum("pi+_1").P();
           v_dedx_vtx0_pi_minus = tdedx[trackIndices_[5 - ip]];
-          v_p_vtx0_pi_minus = hypo_minus.getFinalMomentum("pi+_1").P();
+          v_p_vtx0_pi_minus = hypo_minus.getFinalMomentum("pi+_0").P();
         }
       }
     }
+
+    fillSimInfo_();
 
     if (flag_plus && flag_minus) {
       if (kf_chi2_plus > kf_chi2_minus) {
@@ -249,18 +379,31 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     }
 
     if (flag_plus) {
+      kf_hypo_ = 0;
       npassed[0]++;
       kf_mks_ = v_kf_mks_plus;
       in_mks_ = v_in_mks_plus;
       kf_chi2_ = kf_chi2_plus;
+      in_tks_ = in_tks_plus;
+      kf_tks_ = kf_tks_plus;
+
+      kf_ks_px_ = kf_ks_px_plus;
+      kf_ks_py_ = kf_ks_py_plus;
+      kf_ks_pz_ = kf_ks_pz_plus;
+      kf_ks_pe_ = kf_ks_pe_plus;
+      kf_ks_vc_x_ = kf_ks_vc_x_plus;
+      kf_ks_vc_y_ = kf_ks_vc_y_plus;
+      kf_ks_vc_z_ = kf_ks_vc_z_plus;
+
+      kf_ks_decay_prod_angle_ = kf_ks_prod_angle_plus;
       kf_vtx0_x_ = v_vtx0_plus.X();
       kf_vtx0_y_ = v_vtx0_plus.Y();
       kf_vtx0_z_ = v_vtx0_plus.Z();
       kf_vtx1_x_ = v_vtx1_plus.X();
       kf_vtx1_y_ = v_vtx1_plus.Y();
       kf_vtx1_z_ = v_vtx1_plus.Z();
-      kf_vtx_dr_ = (v_vtx1_minus - v_vtx0_minus).Mag();
-      kf_vtx_drho_ = (v_vtx1_minus - v_vtx0_minus).Perp();
+      kf_vtx_dr_ = (v_vtx1_plus - v_vtx0_plus).Mag();
+      kf_vtx_drho_ = (v_vtx1_plus - v_vtx0_plus).Perp();
       kf_dedx_vtx0_K_ = v_dedx_vtx0_k_plus;
       kf_p_vtx0_K_ = v_p_vtx0_k_plus;
       kf_dedx_vtx0_pi_ = v_dedx_vtx0_pi_plus;
@@ -270,10 +413,23 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     }
 
     if (flag_minus) {
+      kf_hypo_ = 1;
       npassed[1]++;
       kf_mks_ = v_kf_mks_minus;
       in_mks_ = v_in_mks_minus;
       kf_chi2_ = kf_chi2_minus;
+      in_tks_ = in_tks_minus;
+      kf_tks_ = kf_tks_minus;
+
+      kf_ks_px_ = kf_ks_px_minus;
+      kf_ks_py_ = kf_ks_py_minus;
+      kf_ks_pz_ = kf_ks_pz_minus;
+      kf_ks_pe_ = kf_ks_pe_minus;
+      kf_ks_vc_x_ = kf_ks_vc_x_minus;
+      kf_ks_vc_y_ = kf_ks_vc_y_minus;
+      kf_ks_vc_z_ = kf_ks_vc_z_minus;
+
+      kf_ks_decay_prod_angle_ = kf_ks_prod_angle_minus;
       kf_vtx0_x_ = v_vtx0_minus.X();
       kf_vtx0_y_ = v_vtx0_minus.Y();
       kf_vtx0_z_ = v_vtx0_minus.Z();
@@ -289,7 +445,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       std::copy(v_dedx_vtx1_pi_minus, v_dedx_vtx1_pi_minus + 2, kf_dedx_vtx1_pi_);
       std::copy(v_p_vtx1_pi_minus, v_p_vtx1_pi_minus + 2, kf_p_vtx1_pi_);
     }
-
+    
     out_tree->Fill();
     printStatus_(jentry, nentries);
   }
