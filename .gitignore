@@ -1,4 +1,7 @@
 *_C.d
 *_C.so
 *_rdict.pcm
+*.~undo-tree~
+*.root
+*.eps
 rootlogon.C
