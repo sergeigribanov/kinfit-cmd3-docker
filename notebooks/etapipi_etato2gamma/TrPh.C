@@ -1,9 +1,6 @@
 #include <cmath>
 #include <iostream>
 #include <set>
-#include <TCanvas.h>
-#include <TH2.h>
-#include <TStyle.h>
 #include <kfcmd/hypos/Hypo2ChPions2Photons.hpp>
 #include "TrPh.h"
 
@@ -58,7 +55,7 @@ Int_t TrPh::Cut(Long64_t entry) {
   return 1;
 }
 
-void TrPh::setupOutptuBranches_(TTree* tree) {
+void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("kf_err", &kf_err_, "kf_err/I");
   tree->Branch("kf_chi2", &kf_chi2_, "kf_chi2/D");
   tree->Branch("in_mgg", &in_mgg_, "in_mgg/D");
@@ -69,15 +66,15 @@ void TrPh::setupOutptuBranches_(TTree* tree) {
   tree->Branch("kf_vtx_y", &kf_vtx_y_, "kf_vtx_y/D");
   tree->Branch("kf_vtx_z", &kf_vtx_z_, "kf_vtx_z/D");
 
-  tree->Branch("in_total_px_", &in_total_px_, "in_total_px/D");
-  tree->Branch("in_total_py_", &in_total_py_, "in_total_py/D");
-  tree->Branch("in_total_pz_", &in_total_pz_, "in_total_pz/D");
-  tree->Branch("in_total_pe_", &in_total_pe_, "in_total_pe/D");
+  tree->Branch("in_total_px", &in_total_px_, "in_total_px/D");
+  tree->Branch("in_total_py", &in_total_py_, "in_total_py/D");
+  tree->Branch("in_total_pz", &in_total_pz_, "in_total_pz/D");
+  tree->Branch("in_total_pe", &in_total_pe_, "in_total_pe/D");
 
-  tree->Branch("kf_total_px_", &kf_total_px_, "kf_total_px/D");
-  tree->Branch("kf_total_py_", &kf_total_py_, "kf_total_py/D");
-  tree->Branch("kf_total_pz_", &kf_total_pz_, "kf_total_pz/D");
-  tree->Branch("kf_total_pe_", &kf_total_pe_, "kf_total_pe/D");
+  tree->Branch("kf_total_px", &kf_total_px_, "kf_total_px/D");
+  tree->Branch("kf_total_py", &kf_total_py_, "kf_total_py/D");
+  tree->Branch("kf_total_pz", &kf_total_pz_, "kf_total_pz/D");
+  tree->Branch("kf_total_pe", &kf_total_pe_, "kf_total_pe/D");
 }
 
 void TrPh::Loop(const std::string& outpath, double magneticField) {
@@ -87,11 +84,10 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
   const std::set<std::string> sPiPi = {"pi+", "pi-"};
   auto outfl = TFile::Open(outpath.c_str(), "recreate");
   TTree* out_tree = new TTree("kf_data", "");
-  setupOutptuBranches_(out_tree);
+  setupOutputBranches_(out_tree);
   fChain->GetEntry(0);
-  kfcmd::hypos::Hypo2ChPions2Photons hypo(2 * emeas, magneticField);
+  kfcmd::hypos::Hypo2ChPions2Photons hypo(2.e-3 * emeas, magneticField);
   double tchi2;
-  int errCode;
   Long64_t nentries = fChain->GetEntriesFast();
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
@@ -118,8 +114,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       for (std::size_t jph = iph + 1; jph < photonIndices_.size(); ++jph) {
         if (!hypo.fillPhoton("g1", photonIndices_[jph], *this)) continue;
         hypo.optimize();
-        errCode = hypo.getErrorCode();
-        if (errCode != 0) continue;
+        if (hypo.getErrorCode() != 0)
+          continue;
         tchi2 = hypo.getChiSquare();
         if (tchi2 < kf_chi2_) {
           kf_err_ = 0;

@@ -22,7 +22,7 @@ class TrPh : public kfcmd::core::TrPh {
  private:
   bool cutTracks_();
   bool cutPhotons_();
-  void setupOutptuBranches_(TTree*);
+  void setupOutputBranches_(TTree*);
   static const double dZ_;
   static const double dRho_;
   static const double mindEdX_;
