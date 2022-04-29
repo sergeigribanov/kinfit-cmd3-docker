@@ -51,18 +51,14 @@ Int_t TrPh::Cut(Long64_t) {
 }
 
 double TrPh::getAngle_(const kfhypos::HypoKsKPlusPiMinus_NoKsMass &hypo) const {
-  // auto dv = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
-  auto dv = hypo.getFinalMomentum("ks").Vect();
-  // auto p = hypo.getFinalMomentum(decaypds_).Vect();
-  auto p = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  auto dv = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  auto p = hypo.getFinalMomentum(decaypds_).Vect();
   return dv.Angle(p);
 }
 
 double TrPh::getAngle_(const kfhypos::HypoKsKMinusPiPlus_NoKsMass &hypo) const {
-  // auto dv = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
-  auto dv = hypo.getFinalMomentum("ks").Vect();
-  // auto p = hypo.getFinalMomentum(decaypds_).Vect();
-  auto p = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  auto dv = hypo.getFinalVertex("vtx1") - hypo.getFinalVertex("vtx0");
+  auto p = hypo.getFinalMomentum(decaypds_).Vect();
   return dv.Angle(p);
 }
 
@@ -184,7 +180,6 @@ void TrPh::printSummary_(int* npassed, int ncutted, int nentries) {
 void TrPh::Loop(const std::string& outpath, double magneticField) {
   if (fChain == 0) return;
   time_.Start();
-  std::set<std::string> sKs = {"pi+_1", "pi-_1"};
   auto outfl = TFile::Open(outpath.c_str(), "recreate");
   TTree* out_tree = new TTree("kf_data", "");
   setupOutputBranches_(out_tree);
@@ -277,7 +272,6 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       for (int ip = 2; ip < 4; ++ip) {
         if (!hypo_plus.fillTrack("pi+_1", trackIndices_[ip], *this)) continue;
         if (!hypo_plus.fillTrack("k+", trackIndices_[5 - ip], *this)) continue;
-        // std::cout << "________ opt plus __________" << std::endl;
         auto ks_im = hypo_plus.getInitialMomentum("pi-_1") + hypo_plus.getInitialMomentum("pi+_1");
         Eigen::VectorXd tmpv(4);
         tmpv << ks_im.Px(), ks_im.Py(), ks_im.Pz(), 1.e-3;
@@ -305,8 +299,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           kf_ks_vc_y_plus = kf_ks_vc.Y();
           kf_ks_vc_z_plus = kf_ks_vc.Z();
           kf_ks_prod_angle_plus = getAngle_(hypo_plus);
-          v_in_mks_plus = hypo_plus.getInitialMomentum(sKs).M();
-          v_kf_mks_plus = hypo_plus.getFinalMomentum(sKs).M();
+          v_in_mks_plus = hypo_plus.getInitialMomentum(decaypds_).M();
+          v_kf_mks_plus = hypo_plus.getFinalMomentum(decaypds_).M();
           v_dedx_vtx0_k_plus = tdedx[trackIndices_[5 - ip]];
           v_p_vtx0_k_plus = hypo_plus.getFinalMomentum("k+").P();
           v_dedx_vtx1_pi_plus[0] = tdedx[trackIndices_[im]];
@@ -354,8 +348,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           kf_ks_vc_y_minus = kf_ks_vc.Y();
           kf_ks_vc_z_minus = kf_ks_vc.Z();
           kf_ks_prod_angle_minus = getAngle_(hypo_minus);
-          v_in_mks_minus = hypo_minus.getInitialMomentum(sKs).M();
-          v_kf_mks_minus = hypo_minus.getFinalMomentum(sKs).M();
+          v_in_mks_minus = hypo_minus.getInitialMomentum(decaypds_).M();
+          v_kf_mks_minus = hypo_minus.getFinalMomentum(decaypds_).M();
           v_dedx_vtx0_k_minus = tdedx[trackIndices_[1 - im]];
           v_p_vtx0_k_minus = hypo_minus.getFinalMomentum("k-").P();
           v_dedx_vtx1_pi_minus[0] = tdedx[trackIndices_[im]];
@@ -445,7 +439,6 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       std::copy(v_dedx_vtx1_pi_minus, v_dedx_vtx1_pi_minus + 2, kf_dedx_vtx1_pi_);
       std::copy(v_p_vtx1_pi_minus, v_p_vtx1_pi_minus + 2, kf_p_vtx1_pi_);
     }
-    
     out_tree->Fill();
     printStatus_(jentry, nentries);
   }
@@ -453,4 +446,5 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
   outfl->cd();
   out_tree->Write();
   outfl->Close();
+  delete outfl;
 }

@@ -107,7 +107,7 @@ void TrPh::Loop(const std::string &outpath, double magneticField) {
   if (fChain == 0) return;
   auto outfl = TFile::Open(outpath.c_str(), "recreate");
   fChain->GetEntry(0);
-  TH1F chi2Hist("kf_chi2", "", 128, 0, 128);
+  TH1F chi2Hist("kf_chi2", "", 512, 0, 128);
    kfcmd::hypos::Hypo2ChPions2Photons hypo(2.e-3 * emeas, magneticField, 100, 1.e-8);
   Long64_t nentries = fChain->GetEntriesFast();
   Long64_t nb = fChain->GetEntry(entry_);

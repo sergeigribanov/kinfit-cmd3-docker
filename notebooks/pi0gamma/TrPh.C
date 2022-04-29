@@ -53,7 +53,6 @@ void TrPh::setupOutputBranches_(TTree *tree) {
 
 void TrPh::fit_(Hypo3PhotonsCustom *hypo) {
   double tchi2;
-  kf_err_ = 1;
   kf_chi2_ = std::numeric_limits<double>::infinity();
   for (std::size_t iph = 0; iph + 2 < photonIndices_.size(); ++iph)
     for (std::size_t jph = iph + 1; jph + 1 < photonIndices_.size(); ++jph)
@@ -62,6 +61,7 @@ void TrPh::fit_(Hypo3PhotonsCustom *hypo) {
         if (!hypo->fillPhoton("g1", photonIndices_[jph], *this)) continue;
         if (!hypo->fillPhoton("g2", photonIndices_[kph], *this)) continue;
         hypo->optimize();
+        kf_err_ = 1;
         if (hypo->getErrorCode() != 0) continue;
         kf_err_ = 0;
         tchi2 = hypo->getChiSquare();

@@ -224,7 +224,8 @@ def draw_chi2_gaussian_sim(hist,
     xv = np.linspace(1.e-3, 29, 10000)
     yv = f(xv)
     ax.plot(xv, yv, linestyle='--', color=u'#ff7f0e')
-    props = dict(boxstyle='square', facecolor='white', edgecolor=u'#ff7f0e')
+    props = dict(boxstyle='square', facecolor='white', edgecolor=u'#ff7f0e',
+                 linestyle='--')
     textstr = r'''\hspace{{-0.5em}}\begin{{tabular}}{{l l}}
     Amplitude parameter & {ampl:.0f}$\pm${ampl_err:.0f}\\
     NDF parameter & {ndf:.4f}$\pm${ndf_err:.4f}\\

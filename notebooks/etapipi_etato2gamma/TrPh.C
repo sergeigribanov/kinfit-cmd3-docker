@@ -114,10 +114,9 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       for (std::size_t jph = iph + 1; jph < photonIndices_.size(); ++jph) {
         if (!hypo.fillPhoton("g1", photonIndices_[jph], *this)) continue;
         hypo.optimize();
-        if (hypo.getErrorCode() != 0)
-          continue;
+        if (hypo.getErrorCode() != 0) continue;
         tchi2 = hypo.getChiSquare();
-        if (tchi2 < kf_chi2_) {
+        if (tchi2 >= kf_chi2_) continue;
           kf_err_ = 0;
           kf_chi2_ = tchi2;
           auto inP = hypo.getInitialMomentum(sAll);
@@ -137,7 +136,6 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           kf_vtx_x_ = hypo.getFinalVertexX("vtx0");
           kf_vtx_y_ = hypo.getFinalVertexY("vtx0");
           kf_vtx_z_ = hypo.getFinalVertexZ("vtx0");
-        }
       }
     }
     out_tree->Fill();
