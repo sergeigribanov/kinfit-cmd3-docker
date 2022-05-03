@@ -38,7 +38,7 @@ bool TrPh::cutTracks_() {
 }
 
 Int_t TrPh::Cut(Long64_t) {
-  if (nt < 6) return -1;
+  if (nt < 4) return -1;
   if (!cutTracks_()) return -1;
   std::vector<Int_t> charges(nt);
   std::copy(tcharge, tcharge + nt, charges.begin());
@@ -72,7 +72,7 @@ void TrPh::Loop(const std::string &outpath, double mfield) {
   Long64_t nentries = fChain->GetEntriesFast();
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
-    if (jentry % 100 == 0)
+    if (jentry % 2000 == 0)
       std::cout << jentry << " / " << nentries << std::endl;
     Long64_t ientry = LoadTree(jentry);
     if (ientry < 0)
