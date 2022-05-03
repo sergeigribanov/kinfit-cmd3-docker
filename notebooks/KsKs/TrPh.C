@@ -94,9 +94,9 @@ void TrPh::Loop(const std::string &outpath, double mfield) {
           continue;
         if (!hypo.fillTrack("pi-_2", trackIndices_[mi_perm[1]], *this))
           continue;
-        if (!hypo.fillTrack("pi+_1", trackIndices_[pl_perm[2]], *this))
+        if (!hypo.fillTrack("pi+_1", trackIndices_[pl_perm[0]], *this))
           continue;
-        if (!hypo.fillTrack("pi+_2", trackIndices_[pl_perm[3]], *this))
+        if (!hypo.fillTrack("pi+_2", trackIndices_[pl_perm[1]], *this))
           continue;
         Eigen::VectorXd tmpv(4);
         auto ks1P = hypo.getInitialMomentum("pi-_1") + hypo.getInitialMomentum("pi+_1");
