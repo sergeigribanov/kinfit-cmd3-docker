@@ -5,3 +5,5 @@
 *.root
 *.eps
 rootlogon.C
+*build/
+*install/
