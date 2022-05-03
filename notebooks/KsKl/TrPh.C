@@ -76,7 +76,6 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
   setupOutputBranches_(out_tree);
   fChain->GetEntry(0);
   kfcmd::hypos::HypoKsKl hypo(2.e-3 * emeas, magneticField);
-  double tchi2 = 0;
   Long64_t nentries = fChain->GetEntriesFast();
   Long64_t nbytes = 0, nb = 0;
   for (Long64_t jentry = 0; jentry < nentries; jentry++) {
@@ -90,7 +89,6 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
     if (!hypo.fillTrack("pi-_1", trackIndices_[0], *this)) continue;
     if (!hypo.fillTrack("pi+_1", trackIndices_[1], *this)) continue;
-    kf_chi2_ = std::numeric_limits<double>::infinity();
 
     auto ks_im = hypo.getInitialMomentum(decaypds_);
     Eigen::VectorXd tmp_ks_pars(4);
@@ -100,12 +98,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     tmp_kl_pars << -ks_im.Px(), -ks_im.Py(), -ks_im.Pz();
     hypo.setInitialParticleParams("kl", tmp_kl_pars);
     hypo.optimize();
-    kf_err_ = 1;
-    if (hypo.getErrorCode() != 0) continue;
-    kf_err_ = 0;
-    tchi2 = hypo.getChiSquare();
-    if (tchi2 >= kf_chi2_) continue;
-    kf_chi2_ = tchi2;
+    kf_err_ = hypo.getErrorCode();
+    kf_chi2_ = hypo.getChiSquare();
     in_mks_ = hypo.getInitialMomentum(decaypds_).M();
     kf_mks_ = hypo.getFinalMomentum(decaypds_).M();
     auto vtx1 = hypo.getFinalVertex("vtx1");
