@@ -257,11 +257,11 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     kf_hypo_ = -1;
     ncutted++;
     hypo_plus.setBeamXY(xbeam, ybeam);
-    hypo_plus.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo_plus.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo_plus.fixVertexParameter("vtx0", 0, xbeam);
+    hypo_plus.fixVertexParameter("vtx0", 1, ybeam);
     hypo_minus.setBeamXY(xbeam, ybeam);
-    hypo_minus.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo_minus.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo_minus.fixVertexParameter("vtx0", 0, xbeam);
+    hypo_minus.fixVertexParameter("vtx0", 1, ybeam);
     flag_plus = false;
     flag_minus = false;
     kf_chi2_plus = std::numeric_limits<double>::infinity();
@@ -285,8 +285,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           flag_plus = true;
           kf_chi2_plus = tchi2_plus;
 
-          in_tks_plus = hypo_plus.getInitialParameters("ks")(3);
-          kf_tks_plus = hypo_plus.getFinalParameters("ks")(3);
+          in_tks_plus = hypo_plus.getParticleInitialParams("ks")(3);
+          kf_tks_plus = hypo_plus.getParticleFinalParams("ks")(3);
           auto ksP = hypo_plus.getFinalMomentum("ks");
           kf_ks_px_plus = ksP.Px();
           kf_ks_py_plus = ksP.Py();
@@ -339,8 +339,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           kf_ks_py_minus = ksP.Py();
           kf_ks_pz_minus = ksP.Pz();
           kf_ks_pe_minus = ksP.E();
-          in_tks_minus = hypo_minus.getInitialParameters("ks")(3);
-          kf_tks_minus = hypo_minus.getFinalParameters("ks")(3);
+          in_tks_minus = hypo_minus.getParticleInitialParams("ks")(3);
+          kf_tks_minus = hypo_minus.getParticleFinalParams("ks")(3);
           v_vtx0_minus = hypo_minus.getFinalVertex("vtx0");
           v_vtx1_minus = hypo_minus.getFinalVertex("vtx1");
           auto kf_ks_vc = v_vtx0_minus + ksP.Vect() * kf_tks_minus - v_vtx1_minus;

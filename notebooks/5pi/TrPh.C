@@ -80,8 +80,8 @@ void TrPh::setupOutputBranches_(TTree* tree) {
 
 void TrPh::fit_(kfcmd::hypos::Hypo4ChPions2Photons *hypo) {
     hypo->setBeamXY(xbeam, ybeam);
-    hypo->fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo->fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo->fixVertexParameter("vtx0", 0, xbeam);
+    hypo->fixVertexParameter("vtx0", 1, ybeam);
     kf_err_ = 1;
     kf_chi2_ = std::numeric_limits<double>::infinity();
     std::vector<int> mi_perm = {0, 1};
@@ -128,8 +128,8 @@ void TrPh::fit_(kfcmd::hypos::Hypo4ChPions2Photons *hypo) {
 
 void TrPh::fit_mpi0_(kfcmd::hypos::Hypo4ChPions2Photons *hypo) {
     hypo->setBeamXY(xbeam, ybeam);
-    hypo->fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo->fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo->fixVertexParameter("vtx0", 0, xbeam);
+    hypo->fixVertexParameter("vtx0", 1, ybeam);
     kf_err_mpi0_ = 1;
     kf_chi2_mpi0_ = std::numeric_limits<double>::infinity();
     std::vector<int> mi_perm = {0, 1};

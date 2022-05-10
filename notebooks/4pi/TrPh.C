@@ -72,8 +72,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
     hypo.setBeamXY(xbeam, ybeam);
-    hypo.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo.fixVertexParameter("vtx0", 0, xbeam);
+    hypo.fixVertexParameter("vtx0", 1, ybeam);
     kf_err_ = 1;
     kf_chi2_ = std::numeric_limits<double>::infinity();
     std::vector<int> mi_perm = {0, 1};

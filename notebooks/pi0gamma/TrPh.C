@@ -73,9 +73,10 @@ void TrPh::fit_(Hypo3PhotonsCustom *hypo) {
         kf_mgg_[0] = hypo->getFinalMomentum(s_phpair0_).M();
         kf_mgg_[1] = hypo->getFinalMomentum(s_phpair1_).M();
         kf_mgg_[2] = hypo->getFinalMomentum(s_phpair2_).M();
-        kf_vtx_x_ = hypo->getFinalVertexX("vtx0");
-        kf_vtx_y_ = hypo->getFinalVertexY("vtx0");
-        kf_vtx_z_ = hypo->getFinalVertexZ("vtx0");
+        auto vtx = hypo->getFinalVertex("vtx0");
+        kf_vtx_x_ = vtx.X();
+        kf_vtx_y_ = vtx.Y();
+        kf_vtx_z_ = vtx.Z();
         auto in_p_total =  hypo->getInitialMomentum(s_all_photons_);
         in_total_px_ = in_p_total.Px();
         in_total_py_ = in_p_total.Py();
@@ -105,8 +106,8 @@ void TrPh::Loop(const std::string& outpath, double mfield) {
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
     hypo.setBeamXY(xbeam, ybeam);
-    hypo.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo.fixVertexParameter("vtx0", 0, xbeam);
+    hypo.fixVertexParameter("vtx0", 1, ybeam);
     fit_(&hypo);
     out_tree->Fill();
   }
