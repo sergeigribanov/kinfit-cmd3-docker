@@ -1,5 +1,7 @@
 *_C.d
 *_C.so
+*_cpp.d
+*_cpp.so
 *_rdict.pcm
 *.~undo-tree~
 *.root

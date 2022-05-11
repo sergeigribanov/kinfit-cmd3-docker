@@ -4,18 +4,14 @@ Hypo3PhotonsCustom::Hypo3PhotonsCustom(double energy, double magneticField,
                                        long nIter, double tolerance)
     : kfcmd::core::Hypothesis(energy, magneticField, nIter, tolerance) {
   addVertexXYZ("vtx0");
-  auto ph0 = new kfcmd::core::Photon("g0");
-  addParticle(ph0);
-  auto ph1 = new kfcmd::core::Photon("g1");
-  addParticle(ph1);
-  auto ph2 = new kfcmd::core::Photon("g2");
-  addParticle(ph2);
+  addPhoton("g0", "vtx0");
+  addPhoton("g1", "vtx0");
+  addPhoton("g2", "vtx0");
   addConstantMomentumParticle("origin", energy, Eigen::Vector3d::Zero());
   addEnergyMomentumConstraints("em-constraint", {getParticle("origin")},
-                               {ph0, ph1, ph2});
-  addOutputVertexConstraintsXYZ("g0", "vtx0");
-  addOutputVertexConstraintsXYZ("g1", "vtx0");
-  addOutputVertexConstraintsXYZ("g2", "vtx0");
+                               {getParticle("g0"),
+                                getParticle("g1"),
+                                getParticle("g2")});
 }
 
 Hypo3PhotonsCustom::~Hypo3PhotonsCustom() {}
