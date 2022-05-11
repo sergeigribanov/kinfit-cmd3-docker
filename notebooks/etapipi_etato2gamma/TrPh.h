@@ -46,32 +46,7 @@ class TrPh : public kfcmd::core::TrPh {
   double kf_total_py_;
   double kf_total_pz_;
   double kf_total_pe_;
-  double in_g0_ct_;
-  double in_g1_ct_;
-  double kf_g0_ct_;
-  double kf_g1_ct_;
-  double in_g0_cpt_[3];
-  double in_g1_cpt_[3];
-  double kf_g0_cpt_[3];
-  double kf_g1_cpt_[3];
-
-  double in_g0_dir_[3];
-  double in_g1_dir_[3];
-  double kf_g0_dir_[3];
-  double kf_g1_dir_[3];
-
-  double in_g0_tdir_[3];
-  double in_g1_tdir_[3];
-  double kf_g0_tdir_[3];
-  double kf_g1_tdir_[3];
-
-  double g0_time_;
-  double g1_time_;
-  double g0_dr_;
-  double g1_dr_;
-
-  std::vector<std::size_t>
-  trackIndices_;
+  std::vector<std::size_t> trackIndices_;
   std::vector<std::size_t> photonIndices_;
 };
 #endif
