@@ -52,9 +52,7 @@ void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("kf_mpipi_missing", &kf_mpipi_missing_, "kf_mpipi_missing/D");
   tree->Branch("in_mpipi", &in_mpipi_, "in_mpipi/D");
   tree->Branch("kf_mpipi", &kf_mpipi_, "kf_mpipi/D");
-  tree->Branch("kf_vtx_x", &kf_vtx_x_, "kf_vtx_x/D");
-  tree->Branch("kf_vtx_y", &kf_vtx_y_, "kf_vtx_y/D");
-  tree->Branch("kf_vtx_z", &kf_vtx_z_, "kf_vtx_z/D");
+  tree->Branch("kf_vtx", kf_vtx_, "kf_vtx[3]/D");
 }
 
 void TrPh::Loop(const std::string& outpath, double magneticField) {
@@ -74,8 +72,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
     hypo.setBeamXY(xbeam, ybeam);
-    hypo.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo.fixVertexParameter("vtx0", 0, xbeam);
+    hypo.fixVertexParameter("vtx0", 1, ybeam);
     kf_err_ = 1;
     if (!hypo.fillTrack("pi-", trackIndices_[0], *this)) {
       out_tree->Fill();
@@ -95,9 +93,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     kf_mpipi_missing_ = (cmP - kf_pipiP).M();
     in_mpipi_ = in_pipiP.M();
     kf_mpipi_ = kf_pipiP.M();
-    kf_vtx_x_ = hypo.getFinalVertexX("vtx0");
-    kf_vtx_y_ = hypo.getFinalVertexY("vtx0");
-    kf_vtx_z_ = hypo.getFinalVertexZ("vtx0");
+    auto vtx = hypo.getFinalVertex("vtx0");
+    vtx.GetXYZ(kf_vtx_);
     out_tree->Fill();
   }
   outfl->cd();

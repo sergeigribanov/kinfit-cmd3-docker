@@ -63,16 +63,8 @@ void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("in_mpipi", &in_mpipi_, "in_mpipi/D");
   tree->Branch("kf_mpipi", &kf_mpipi_, "kf_mpipi/D");
   tree->Branch("kf_vtx", &kf_vtx_, "kf_vtx[3]/D");
-
-  tree->Branch("in_total_px", &in_total_px_, "in_total_px/D");
-  tree->Branch("in_total_py", &in_total_py_, "in_total_py/D");
-  tree->Branch("in_total_pz", &in_total_pz_, "in_total_pz/D");
-  tree->Branch("in_total_pe", &in_total_pe_, "in_total_pe/D");
-
-  tree->Branch("kf_total_px", &kf_total_px_, "kf_total_px/D");
-  tree->Branch("kf_total_py", &kf_total_py_, "kf_total_py/D");
-  tree->Branch("kf_total_pz", &kf_total_pz_, "kf_total_pz/D");
-  tree->Branch("kf_total_pe", &kf_total_pe_, "kf_total_pe/D");
+  tree->Branch("in_total_p", in_total_p_, "in_total_p[4]/D");
+  tree->Branch("kf_total_p", kf_total_p_, "kf_total_p[4]/D");
 
   tree->Branch("kf_ct_out_pipl", &kf_ct_out_pipl_, "kf_ct_out_pipl/D");
   tree->Branch("kf_ct_out_pimi", &kf_ct_out_pimi_, "kf_ct_out_pimi/D");
@@ -122,14 +114,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           kf_chi2_ = tchi2;
           auto inP = hypo.getInitialMomentum(sAll);
           auto kfP = hypo.getFinalMomentum(sAll);
-          in_total_px_ = inP.Px();
-          in_total_py_ = inP.Py();
-          in_total_pz_ = inP.Pz();
-          in_total_pe_ = inP.E();
-          kf_total_px_ = kfP.Px();
-          kf_total_py_ = kfP.Py();
-          kf_total_pz_ = kfP.Pz();
-          kf_total_pe_ = kfP.E();
+          inP.GetXYZT(in_total_p_);
+          kfP.GetXYZT(kf_total_p_);
           in_mgg_ = hypo.getInitialMomentum(sGG).M();
           kf_mgg_ = hypo.getFinalMomentum(sGG).M();
           in_mpipi_ = hypo.getInitialMomentum(sPiPi).M();

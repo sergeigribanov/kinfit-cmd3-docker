@@ -28,10 +28,8 @@ private:
   double in_mgg_[3];
   double kf_mgg_[3];
   double kf_vtx_[3];
-  double in_total_p_[3];
-  double in_total_pe_;
-  double kf_total_p_[3];
-  double kf_total_pe_;
+  double in_total_p_[4];
+  double kf_total_p_[4];
 };
 
 #endif

@@ -42,9 +42,7 @@ class TrPh : public kfcmd::core::TrPh {
   double kf_mpipi_missing_;
   double in_mpipi_;
   double kf_mpipi_;
-  double kf_vtx_x_;
-  double kf_vtx_y_;
-  double kf_vtx_z_;
+  double kf_vtx_[3];
   std::vector<std::size_t> trackIndices_;
 };
 #endif

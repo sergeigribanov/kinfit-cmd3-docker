@@ -6,8 +6,8 @@ mkdir $SOURCE_DIR
 mkdir $BUILD_DIR
 cd $SOURCE_DIR
 
-git clone --branch develop1 https://github.com/sergeigribanov/KFBase
-git clone --branch develop1 https://github.com/sergeigribanov/KFCmd
+git clone --branch develop https://github.com/sergeigribanov/KFBase
+git clone --branch develop https://github.com/sergeigribanov/KFCmd
 git clone https://github.com/sergeigribanov/gaussgen
 
 source $PKG_DIR/root/bin/thisroot.sh
