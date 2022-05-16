@@ -46,6 +46,8 @@ class TrPh : public kfcmd::core::TrPh {
   double kf_total_py_;
   double kf_total_pz_;
   double kf_total_pe_;
+  double kf_ct_out_pipl_;
+  double kf_ct_out_pimi_;
   std::vector<std::size_t> trackIndices_;
   std::vector<std::size_t> photonIndices_;
 };

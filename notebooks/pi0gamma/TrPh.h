@@ -27,16 +27,10 @@ private:
   double kf_chi2_;
   double in_mgg_[3];
   double kf_mgg_[3];
-  double kf_vtx_x_;
-  double kf_vtx_y_;
-  double kf_vtx_z_;
-  double in_total_px_;
-  double in_total_py_;
-  double in_total_pz_;
+  double kf_vtx_[3];
+  double in_total_p_[3];
   double in_total_pe_;
-  double kf_total_px_;
-  double kf_total_py_;
-  double kf_total_pz_;
+  double kf_total_p_[3];
   double kf_total_pe_;
 };
 

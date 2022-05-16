@@ -62,18 +62,12 @@ void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("kf_mgg", &kf_mgg_, "kf_mgg/D");
   tree->Branch("in_mpipi", &in_mpipi_, "in_mpipi/D");
   tree->Branch("kf_mpipi", &kf_mpipi_, "kf_mpipi/D");
-  tree->Branch("kf_vtx_x", &kf_vtx_x_, "kf_vtx_x/D");
-  tree->Branch("kf_vtx_y", &kf_vtx_y_, "kf_vtx_y/D");
-  tree->Branch("kf_vtx_z", &kf_vtx_z_, "kf_vtx_z/D");
+  tree->Branch("kf_vtx", kf_vtx_, "kf_vtx[3]/D");
 
-  tree->Branch("in_total_px", &in_total_px_, "in_total_px/D");
-  tree->Branch("in_total_py", &in_total_py_, "in_total_py/D");
-  tree->Branch("in_total_pz", &in_total_pz_, "in_total_pz/D");
+  tree->Branch("in_total_p", in_total_p_, "in_total_p[3]/D");
   tree->Branch("in_total_pe", &in_total_pe_, "in_total_pe/D");
 
-  tree->Branch("kf_total_px", &kf_total_px_, "kf_total_px/D");
-  tree->Branch("kf_total_py", &kf_total_py_, "kf_total_py/D");
-  tree->Branch("kf_total_pz", &kf_total_pz_, "kf_total_pz/D");
+  tree->Branch("kf_total_p", kf_total_p_, "kf_total_p[3]/D");
   tree->Branch("kf_total_pe", &kf_total_pe_, "kf_total_pe/D");
 }
 
@@ -97,8 +91,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
     hypo.setBeamXY(xbeam, ybeam);
-    hypo.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo.fixVertexParameter("vtx0", 0, xbeam);
+    hypo.fixVertexParameter("vtx0", 0, ybeam);
     kf_err_ = 1;
     if (!hypo.fillTrack("pi-", trackIndices_[0], *this)) {
       out_tree->Fill();
@@ -111,6 +105,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     kf_chi2_ = std::numeric_limits<double>::infinity();
     for (std::size_t iph = 0; iph < photonIndices_.size(); ++iph) {
       if (!hypo.fillPhoton("g0", photonIndices_[iph], *this)) continue;
+      hypo.updateInitialParams();
       auto tmp_p = -(hypo.getInitialMomentum("g0") +
                     hypo.getInitialMomentum("pi+") +
                     hypo.getInitialMomentum("pi-")).Vect();
@@ -127,21 +122,16 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       kf_chi2_ = tchi2;
       auto inP = hypo.getInitialMomentum(sAll);
       auto kfP = hypo.getFinalMomentum(sAll);
-      in_total_px_ = inP.Px();
-      in_total_py_ = inP.Py();
-      in_total_pz_ = inP.Pz();
+      inP.Vect().GetXYZ(in_total_p_);
       in_total_pe_ = inP.E();
-      kf_total_px_ = kfP.Px();
-      kf_total_py_ = kfP.Py();
-      kf_total_pz_ = kfP.Pz();
+      kfP.Vect().GetXYZ(kf_total_p_);
       kf_total_pe_ = kfP.E();
       in_mgg_ = hypo.getInitialMomentum(sGG).M();
       kf_mgg_ = hypo.getFinalMomentum(sGG).M();
       in_mpipi_ = hypo.getInitialMomentum(sPiPi).M();
       kf_mpipi_ = hypo.getFinalMomentum(sPiPi).M();
-      kf_vtx_x_ = hypo.getFinalVertexX("vtx0");
-      kf_vtx_y_ = hypo.getFinalVertexY("vtx0");
-      kf_vtx_z_ = hypo.getFinalVertexZ("vtx0");
+      auto vtx = hypo.getFinalVertex("vtx0");
+      vtx.GetXYZ(kf_vtx_);
     }
     out_tree->Fill();
   }

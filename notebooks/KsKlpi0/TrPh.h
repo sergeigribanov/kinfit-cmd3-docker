@@ -31,12 +31,8 @@ class TrPh : public kfcmd::core::TrPh {
   double in_mks_;
   double kf_mgg_;
   double kf_mks_;
-  double kf_vtx0_x_;
-  double kf_vtx0_y_;
-  double kf_vtx0_z_;
-  double kf_vtx1_x_;
-  double kf_vtx1_y_;
-  double kf_vtx1_z_;
+  double kf_vtx0_[3];
+  double kf_vtx1_[3];
   double kf_vtx_dr_;
   double kf_vtx_drho_;
   double kf_dvtx_2pi_angle_;

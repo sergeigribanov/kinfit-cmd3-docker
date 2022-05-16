@@ -73,6 +73,9 @@ void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("kf_total_py", &kf_total_py_, "kf_total_py/D");
   tree->Branch("kf_total_pz", &kf_total_pz_, "kf_total_pz/D");
   tree->Branch("kf_total_pe", &kf_total_pe_, "kf_total_pe/D");
+
+  tree->Branch("kf_ct_out_pipl", &kf_ct_out_pipl_, "kf_ct_out_pipl/D");
+  tree->Branch("kf_ct_out_pimi", &kf_ct_out_pimi_, "kf_ct_out_pimi/D");
 }
 
 void TrPh::Loop(const std::string& outpath, double magneticField) {
@@ -133,6 +136,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           kf_mpipi_ = hypo.getFinalMomentum(sPiPi).M();
           auto vtx = hypo.getFinalVertex("vtx0");
           vtx.GetXYZ(kf_vtx_);
+          kf_ct_out_pipl_ = hypo.getParticleFinalParams("pi+")(5);
+          kf_ct_out_pimi_ = hypo.getParticleFinalParams("pi-")(5);
       }
     }
     out_tree->Fill();

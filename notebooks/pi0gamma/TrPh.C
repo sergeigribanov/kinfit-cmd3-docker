@@ -38,16 +38,10 @@ void TrPh::setupOutputBranches_(TTree *tree) {
   tree->Branch("kf_chi2", &kf_chi2_, "kf_chi2/D");
   tree->Branch("in_mgg", in_mgg_, "in_mgg[3]/D");
   tree->Branch("kf_mgg", kf_mgg_, "kf_mgg[3]/D");
-  tree->Branch("kf_vtx_x", &kf_vtx_x_, "kf_vtx_x/D");
-  tree->Branch("kf_vtx_y", &kf_vtx_y_, "kf_vtx_y/D");
-  tree->Branch("kf_vtx_z", &kf_vtx_z_, "kf_vtx_z/D");
-  tree->Branch("in_total_px", &in_total_px_, "in_total_px/D");
-  tree->Branch("in_total_py", &in_total_py_, "in_total_py/D");
-  tree->Branch("in_total_pz", &in_total_pz_, "in_total_pz/D");
+  tree->Branch("kf_vtx", kf_vtx_, "kf_vtx[3]/D");
+  tree->Branch("in_total_p", in_total_p_, "in_total_p[3]/D");
   tree->Branch("in_total_pe", &in_total_pe_, "in_total_pe/D");
-  tree->Branch("kf_total_px", &kf_total_px_, "kf_total_px/D");
-  tree->Branch("kf_total_py", &kf_total_py_, "kf_total_py/D");
-  tree->Branch("kf_total_pz", &kf_total_pz_, "kf_total_pz/D");
+  tree->Branch("kf_total_p", kf_total_p_, "kf_total_p[3]/D");
   tree->Branch("kf_total_pe", &kf_total_pe_, "kf_total_pe/D");
 }
 
@@ -74,18 +68,12 @@ void TrPh::fit_(Hypo3PhotonsCustom *hypo) {
         kf_mgg_[1] = hypo->getFinalMomentum(s_phpair1_).M();
         kf_mgg_[2] = hypo->getFinalMomentum(s_phpair2_).M();
         auto vtx = hypo->getFinalVertex("vtx0");
-        kf_vtx_x_ = vtx.X();
-        kf_vtx_y_ = vtx.Y();
-        kf_vtx_z_ = vtx.Z();
+        vtx.GetXYZ(kf_vtx_);
         auto in_p_total =  hypo->getInitialMomentum(s_all_photons_);
-        in_total_px_ = in_p_total.Px();
-        in_total_py_ = in_p_total.Py();
-        in_total_pz_ = in_p_total.Pz();
+        in_p_total.Vect().GetXYZ(in_total_p_);
         in_total_pe_ = in_p_total.E();
         auto kf_p_total = hypo->getFinalMomentum(s_all_photons_);
-        kf_total_px_ = kf_p_total.Px();
-        kf_total_py_ = kf_p_total.Py();
-        kf_total_pz_ = kf_p_total.Pz();
+        kf_p_total.Vect().GetXYZ(kf_total_p_);
         kf_total_pe_ = kf_p_total.E();
       }
 }

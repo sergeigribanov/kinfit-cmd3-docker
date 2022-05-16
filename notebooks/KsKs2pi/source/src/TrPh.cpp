@@ -81,8 +81,8 @@ void TrPh::setupOutputBranches_(TTree *tree) {
       if (Cut(ientry) < 0)
         continue;
       hypo.setBeamXY(xbeam, ybeam);
-      hypo.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-      hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+      hypo.fixVertexParameter("vtx0", 0, xbeam);
+      hypo.fixVertexParameter("vtx0", 0, ybeam);
       std::vector<int> mi_perm = {0, 1, 2};
       kf_err_ = 1;
       kf_chi2_ = std::numeric_limits<double>::infinity();
@@ -101,6 +101,7 @@ void TrPh::setupOutputBranches_(TTree *tree) {
             continue;
           if (!hypo.fillTrack("pi+_2", trackIndices_[pl_perm[2]], *this))
             continue;
+          hypo.updateInitialParams();
           Eigen::VectorXd tmpv(4);
           auto ks1P = hypo.getInitialMomentum("pi-_1") + hypo.getInitialMomentum("pi+_1");
           tmpv << ks1P.Px(), ks1P.Py(), ks1P.Pz(), 1.e-3;

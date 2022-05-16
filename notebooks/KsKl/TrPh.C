@@ -56,12 +56,8 @@ void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("kf_chi2", &kf_chi2_, "kf_chi2/D");
   tree->Branch("in_mks", &in_mks_, "in_mks/D");
   tree->Branch("kf_mks", &kf_mks_, "kf_mks/D");
-  tree->Branch("kf_vtx0_x", &kf_vtx0_x_, "kf_vtx0_x/D");
-  tree->Branch("kf_vtx0_y", &kf_vtx0_y_, "kf_vtx0_y/D");
-  tree->Branch("kf_vtx0_z", &kf_vtx0_z_, "kf_vtx0_z/D");
-  tree->Branch("kf_vtx1_x", &kf_vtx1_x_, "kf_vtx1_x/D");
-  tree->Branch("kf_vtx1_y", &kf_vtx1_y_, "kf_vtx1_y/D");
-  tree->Branch("kf_vtx1_z", &kf_vtx1_z_, "kf_vtx1_z/D");
+  tree->Branch("kf_vtx0", kf_vtx0_, "kf_vtx0[3]/D");
+  tree->Branch("kf_vtx1", kf_vtx1_, "kf_vtx1[3]/D");
   tree->Branch("kf_vtx_dr", &kf_vtx_dr_, "kf_vtx_dr/D");
   tree->Branch("kf_vtx_drho", &kf_vtx_drho_, "kf_vtx_drho/D");
   tree->Branch("kf_dvtx_2pi_angle",
@@ -85,11 +81,11 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
     hypo.setBeamXY(xbeam, ybeam);
-    hypo.fixVertexComponent("vtx0", xbeam, kfbase::core::VERTEX_X);
-    hypo.fixVertexComponent("vtx0", ybeam, kfbase::core::VERTEX_Y);
+    hypo.fixVertexParameter("vtx0", 0, xbeam);
+    hypo.fixVertexParameter("vtx0", 1, ybeam);
     if (!hypo.fillTrack("pi-_1", trackIndices_[0], *this)) continue;
     if (!hypo.fillTrack("pi+_1", trackIndices_[1], *this)) continue;
-
+    hypo.updateInitialParams();
     auto ks_im = hypo.getInitialMomentum(decaypds_);
     Eigen::VectorXd tmp_ks_pars(4);
     tmp_ks_pars << ks_im.Px(), ks_im.Py(), ks_im.Pz(), 1.e-3;
@@ -104,12 +100,8 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     kf_mks_ = hypo.getFinalMomentum(decaypds_).M();
     auto vtx1 = hypo.getFinalVertex("vtx1");
     auto vtx0 = hypo.getFinalVertex("vtx0");
-    kf_vtx0_x_ = vtx0.X();
-    kf_vtx0_y_ = vtx0.Y();
-    kf_vtx0_z_ = vtx0.Z();
-    kf_vtx1_x_ = vtx1.X();
-    kf_vtx1_y_ = vtx1.Y();
-    kf_vtx1_z_ = vtx1.Z();
+    vtx0.GetXYZ(kf_vtx0_);
+    vtx1.GetXYZ(kf_vtx1_);
     kf_vtx_dr_ = (vtx1 - vtx0).Mag();
     kf_vtx_drho_ = (vtx1 - vtx0).Perp();
     kf_dvtx_2pi_angle_ = getAngle_(hypo);

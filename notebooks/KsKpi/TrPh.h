@@ -36,12 +36,8 @@ private:
   double kf_chi2_;
   double kf_mks_;
   double in_mks_;
-  double kf_vtx0_x_;
-  double kf_vtx0_y_;
-  double kf_vtx0_z_;
-  double kf_vtx1_x_;
-  double kf_vtx1_y_;
-  double kf_vtx1_z_;
+  double kf_vtx0_[3];
+  double kf_vtx1_[3];
   double kf_vtx_dr_;
   double kf_vtx_drho_;
   double kf_dedx_vtx0_K_;
@@ -69,6 +65,11 @@ private:
   double sim_ks_vtx_[3];
   double sim_vtx_dr_;
   double sim_vtx_drho_;
+
+  double kf_ct_out_pipl1_;
+  double kf_ct_out_pimi1_;
+  double kf_ct_out_pich0_;
+  double kf_ct_out_kch0_;
 
   TStopwatch time_;
   TStopwatch timePerEntry_;
