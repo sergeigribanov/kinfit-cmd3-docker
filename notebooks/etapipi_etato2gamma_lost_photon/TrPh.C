@@ -63,7 +63,7 @@ void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("in_mpipi", &in_mpipi_, "in_mpipi/D");
   tree->Branch("kf_mpipi", &kf_mpipi_, "kf_mpipi/D");
   tree->Branch("kf_vtx", kf_vtx_, "kf_vtx[3]/D");
-  tree->Branch("in_total_p", in_total_p_, "in_total_p[4]]/D");
+  tree->Branch("in_total_p", in_total_p_, "in_total_p[4]/D");
   tree->Branch("kf_total_p", kf_total_p_, "kf_total_p[4]/D");
 }
 
