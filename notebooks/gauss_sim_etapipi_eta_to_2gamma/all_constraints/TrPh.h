@@ -3,6 +3,7 @@
 #include <vector>
 #include <TRandom.h>
 #include <TH1F.h>
+#include <TH2F.h>
 #include <kfcmd/core/TrPh.hpp>
 #include <kfcmd/hypos/Hypo2ChPions2Photons.hpp>
 
@@ -20,6 +21,15 @@ typedef struct {
   Eigen::MatrixXd invCovGamma1;
 } InputParams;
 
+typedef struct Histograms {
+  TH1F *chi2Hist;
+  TH1F *qHist;
+  TH2F *chi2_vs_q;
+  Histograms();
+  virtual ~Histograms();
+  void write(const std::string&);
+} Histograms;
+
 class TrPh : public kfcmd::core::TrPh {
  public:
   TrPh(TTree* tree = 0);
@@ -34,7 +44,7 @@ private:
   bool cutPhotons_();
   bool fitOnce_(kfhypos::Hypo2ChPions2Photons *);
   void fillParams_(const kfhypos::Hypo2ChPions2Photons &);
-  void refit_(kfhypos::Hypo2ChPions2Photons *, TH1F *);
+  void refit_(kfhypos::Hypo2ChPions2Photons*, Histograms*);
   static const double dZ_;
   static const double dRho_;
   static const double mindEdX_;

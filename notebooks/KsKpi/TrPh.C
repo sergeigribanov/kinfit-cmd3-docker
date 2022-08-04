@@ -214,6 +214,9 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
   double kf_ks_vc_y_minus = 0;
   double kf_ks_vc_z_minus = 0;
 
+  int kf_err_plus;
+  int kf_err_minus;
+
   double kf_chi2_plus;
   double tchi2_plus;
   double kf_chi2_minus;
@@ -254,8 +257,15 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nb = fChain->GetEntry(jentry);
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
+    kf_err_plus = 1;
+    kf_err_minus = 1;
     kf_err_ = 1;
     kf_hypo_ = -1;
+    fillSimInfo_();
+    if (sim_hypo_ != 0 && sim_hypo_ != 1) {
+      // [!!!] consider only events with k-mesons from simulation
+      continue;
+    }
     ncutted++;
     hypo_plus.setBeamXY(xbeam, ybeam);
     hypo_plus.fixVertexParameter("vtx0", 0, xbeam);
@@ -282,7 +292,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
         hypo_plus.optimize();
         errCode = hypo_plus.getErrorCode();
         if (errCode != 0) continue;
-        kf_err_ = 0;
+        kf_err_plus = 0;
         tchi2_plus = hypo_plus.getChiSquare();
         if (tchi2_plus < kf_chi2_plus) {
           flag_plus = true;
@@ -335,7 +345,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
         hypo_minus.optimize();
         errCode = hypo_minus.getErrorCode();
         if (errCode != 0) continue;
-        kf_err_ = 0;
+        kf_err_minus = 0;
         tchi2_minus = hypo_minus.getChiSquare();
         if (tchi2_minus < kf_chi2_minus) {
           flag_minus = true;
@@ -373,8 +383,6 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       }
     }
 
-    fillSimInfo_();
-
     if (flag_plus && flag_minus) {
       if (kf_chi2_plus > kf_chi2_minus) {
         flag_plus = false;
@@ -384,6 +392,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     }
 
     if (flag_plus) {
+      kf_err_ = kf_err_plus;
       kf_hypo_ = 0;
       npassed[0]++;
       kf_mks_ = v_kf_mks_plus;
@@ -414,6 +423,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     }
 
     if (flag_minus) {
+      kf_err_ = kf_err_minus;
       kf_hypo_ = 1;
       npassed[1]++;
       kf_mks_ = v_kf_mks_minus;

@@ -31,8 +31,10 @@ class TrPh : public kfcmd::core::TrPh {
   static const double maxTPtot_;
   static const double minPhEn_;
   static const double maxPhEn_;
+  int numiters_;
   int kf_err_;
   double kf_chi2_;
+  double kf_q_;
   double in_mgg_;
   double kf_mgg_;
   double in_mpipi_;

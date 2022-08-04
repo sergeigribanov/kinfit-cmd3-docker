@@ -17,6 +17,7 @@ private:
   bool cutPhotons_();
   void setupOutputBranches_(TTree *);
   void fit_(Hypo3PhotonsCustom*);
+  void fillSimInfo_();
   std::vector<std::size_t> photonIndices_;
   static const double min_energy_;
   static const std::set<std::string> s_phpair0_;
@@ -30,6 +31,7 @@ private:
   double kf_vtx_[3];
   double in_total_p_[4];
   double kf_total_p_[4];
+  double sim_ee_vtx_z_;
 };
 
 #endif

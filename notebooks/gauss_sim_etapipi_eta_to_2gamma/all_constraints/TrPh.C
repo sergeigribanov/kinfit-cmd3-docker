@@ -13,10 +13,30 @@ const double TrPh::maxTPtot_ = 1000;
 const double TrPh::minPhEn_ = 20;
 const double TrPh::maxPhEn_ = 1000;
 
+Histograms::Histograms(){
+  chi2Hist = new TH1F("kf_chi2", "", 128, 0, 24);
+  qHist = new TH1F("qhist", "", 1024, -3, 7);
+  chi2_vs_q = new TH2F("chi2_vs_q", "", 1024, 0, 24, 1024, -10, 10);
+}
+
+Histograms::~Histograms() {
+  delete chi2Hist;
+  delete qHist;
+  delete chi2_vs_q;
+}
+
+void Histograms::write(const std::string &path) {
+  auto fl = TFile::Open(path.c_str(), "recreate");
+  fl->cd();
+  chi2Hist->Write();
+  qHist->Write();
+  chi2_vs_q->Write();
+  fl->Close();
+  delete fl;
+}
+
 TrPh::TrPh(TTree *tree)
-    : kfcmd::core::TrPh(tree),
-      entry_(0),
-      nevents_(100000)  {}
+    : kfcmd::core::TrPh(tree), entry_(0), nevents_(100000) {}
 
 TrPh::~TrPh() {}
 
@@ -89,14 +109,18 @@ void TrPh::fillParams_(const kfhypos::Hypo2ChPions2Photons &hypo) {
   params_.invCovGamma1 = hypo.getParticleInverseCovarianceMatrix("g1");
 }
 
-void TrPh::refit_(kfhypos::Hypo2ChPions2Photons *hypo, TH1F *chi2Hist) {
+void TrPh::refit_(kfhypos::Hypo2ChPions2Photons *hypo, Histograms* hists) {
   hypo->setInitialParticleParams("pi-", gaussgen::gaussgen_nfirst(5, params_.parPiMi, params_.invCovPiMi, &rnd_));
   hypo->setInitialParticleParams("pi+", gaussgen::gaussgen_nfirst(5, params_.parPiPl, params_.invCovPiPl, &rnd_));
   hypo->setInitialParticleParams("g0", gaussgen::gaussgen(params_.parGamma0, params_.invCovGamma0, &rnd_));
   hypo->setInitialParticleParams("g1", gaussgen::gaussgen(params_.parGamma1, params_.invCovGamma1, &rnd_));
   hypo->optimize();
   if (hypo->getErrorCode() != 0) return;
-  chi2Hist->Fill(hypo->getChiSquare());
+  const double chi2_val = hypo->getChiSquare();
+  const double q_val = 0.5 * hypo->getdxTHdx() - hypo->getChiSquare();
+  hists->chi2Hist->Fill(chi2_val);
+  hists->qHist->Fill(q_val);
+  hists->chi2_vs_q->Fill(chi2_val, q_val);
 }
 
 void TrPh::setEntry(int entry) { entry_ = entry; }
@@ -105,32 +129,23 @@ void TrPh::setNEvents(int nevents) { nevents_ = nevents; }
 
 void TrPh::Loop(const std::string &outpath, double magneticField) {
   if (fChain == 0) return;
-  auto outfl = TFile::Open(outpath.c_str(), "recreate");
   fChain->GetEntry(0);
-  TH1F chi2Hist("kf_chi2", "", 512, 0, 128);
-   kfcmd::hypos::Hypo2ChPions2Photons hypo(2.e-3 * emeas, magneticField, 100, 1.e-8);
-  Long64_t nentries = fChain->GetEntriesFast();
+  Histograms hists;
+  kfcmd::hypos::Hypo2ChPions2Photons hypo(2.e-3 * emeas, magneticField, 100, 1.e-8);
   Long64_t nb = fChain->GetEntry(entry_);
   if (Cut(entry_) < 0) {
     std::cout << "[!] Entry " << entry_ << " didn't pass selection criteria" << std::endl;
-    outfl->Close();
-    delete outfl;
     return;
   }
   hypo.setBeamXY(xbeam, ybeam);
   hypo.fixVertexParameter("vtx0", 0, xbeam);
-  hypo.fixVertexParameter("vtx0", 0, ybeam);
+  hypo.fixVertexParameter("vtx0", 1, ybeam);
   if (!fitOnce_(&hypo)) {
     std::cout << "[!] Fit isn't converged" << std::endl;
-    outfl->Close();
-    delete outfl;
     return;
   }
   for (int event = 0; event < nevents_; ++event) {
-    refit_(&hypo, &chi2Hist);
+    refit_(&hypo, &hists);
   }
-  outfl->cd();
-  chi2Hist.Write();
-  outfl->Close();
-  delete outfl;
+  hists.write(outpath);
 }

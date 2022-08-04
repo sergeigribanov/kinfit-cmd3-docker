@@ -109,6 +109,9 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       tmp_pars << tmp_p.Mag(), tmp_p.Theta(), tmp_p.Phi();
       hypo.setInitialParticleParams("g1", tmp_pars);
       hypo.optimize();
+      if (kf_err_ != 0 && kf_err_ != 2) {
+        kf_err_ = hypo.getErrorCode();
+      }
       if (hypo.getErrorCode() != 0)
         continue;
       tchi2 = hypo.getChiSquare();

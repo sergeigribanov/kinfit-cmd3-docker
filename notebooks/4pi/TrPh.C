@@ -35,9 +35,6 @@ bool TrPh::cutTracks_() {
 
 
 Int_t TrPh::Cut(Long64_t entry) {
-  bool bvar;
-  bvar = (nt > 1) && (nph > 1);
-  if (!bvar) return -1;
   if (!cutTracks_()) return -1;
   std::vector<Int_t> charges(nt);
   std::copy(tcharge, tcharge + nt, charges.begin());
@@ -54,6 +51,23 @@ void TrPh::setupOutputBranches_(TTree* tree) {
   tree->Branch("kf_p", kf_p_, "kf_p[4][3]/D");
   tree->Branch("kf_e", kf_e_, "kf_e[4]/D");
   tree->Branch("vtx", vtx_, "vtx[3]/D");
+  tree->Branch("sim_ee_vtx_z", &sim_ee_vtx_z_, "sim_ee_vtx_z/D");
+}
+
+void TrPh::fillSimInfo_() {
+  bool flag = false;
+  for (int i = 0; i < nsim; ++i) {
+    switch (simorig[i]) {
+    case 0:
+      sim_ee_vtx_z_ = simvtz[i];
+      flag = true;
+      break;
+    default:
+      break;
+    }
+    if (flag)
+      break;
+  }
 }
 
 void TrPh::Loop(const std::string& outpath, double magneticField) {
@@ -71,75 +85,72 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     nb = fChain->GetEntry(jentry);
     nbytes += nb;
     if (Cut(ientry) < 0) continue;
+    fillSimInfo_();
     hypo.setBeamXY(xbeam, ybeam);
     hypo.fixVertexParameter("vtx0", 0, xbeam);
     hypo.fixVertexParameter("vtx0", 1, ybeam);
     kf_err_ = 1;
     kf_chi2_ = std::numeric_limits<double>::infinity();
-    std::vector<int> mi_perm = {0, 1};
-    do {
-      std::vector<int> pl_perm = {2, 3};
-      do {
-        if (!hypo.fillTrack("pi-_0", trackIndices_[mi_perm[0]], *this))
-          continue;
-        if (!hypo.fillTrack("pi-_1", trackIndices_[mi_perm[1]], *this))
-          continue;
-        if (!hypo.fillTrack("pi+_0", trackIndices_[pl_perm[0]], *this))
-          continue;
-        if (!hypo.fillTrack("pi+_1", trackIndices_[pl_perm[1]], *this))
-          continue;
-        hypo.optimize();
-        if (hypo.getErrorCode() != 0)  continue;
-        kf_err_ = 0;
-        double tchi2 = hypo.getChiSquare();
-        if (tchi2 < kf_chi2_) {
-          kf_chi2_ = tchi2;
-          auto in_pimi0 = hypo.getInitialMomentum("pi-_0");
-          auto in_pimi1 = hypo.getInitialMomentum("pi-_1");
-          auto in_pipl0 = hypo.getInitialMomentum("pi+_0");
-          auto in_pipl1 = hypo.getInitialMomentum("pi+_1");
-          auto kf_pimi0 = hypo.getFinalMomentum("pi-_0");
-          auto kf_pimi1 = hypo.getFinalMomentum("pi-_1");
-          auto kf_pipl0 = hypo.getFinalMomentum("pi+_0");
-          auto kf_pipl1 = hypo.getFinalMomentum("pi+_1");
-          auto vtx = hypo.getFinalVertex("vtx0");
-          in_p_[0][0] = in_pimi0.Px();
-          in_p_[0][1] = in_pimi0.Py();
-          in_p_[0][2] = in_pimi0.Pz();
-          in_p_[1][0] = in_pimi1.Px();
-          in_p_[1][1] = in_pimi1.Py();
-          in_p_[1][2] = in_pimi1.Pz();
-          in_p_[2][0] = in_pipl0.Px();
-          in_p_[2][1] = in_pipl0.Py();
-          in_p_[2][2] = in_pipl0.Pz();
-          in_p_[3][0] = in_pipl1.Px();
-          in_p_[3][1] = in_pipl1.Py();
-          in_p_[3][2] = in_pipl1.Pz();
-          kf_p_[0][0] = kf_pimi0.Px();
-          kf_p_[0][1] = kf_pimi0.Py();
-          kf_p_[0][2] = kf_pimi0.Pz();
-          kf_p_[1][0] = kf_pimi1.Px();
-          kf_p_[1][1] = kf_pimi1.Py();
-          kf_p_[1][2] = kf_pimi1.Pz();
-          kf_p_[2][0] = kf_pipl0.Px();
-          kf_p_[2][1] = kf_pipl0.Py();
-          kf_p_[2][2] = kf_pipl0.Pz();
-          kf_p_[3][0] = kf_pipl1.Px();
-          kf_p_[3][1] = kf_pipl1.Py();
-          kf_p_[3][2] = kf_pipl1.Pz();
-          in_e_[0] = in_pimi0.E();
-          in_e_[1] = in_pimi1.E();
-          in_e_[2] = in_pipl0.E();
-          in_e_[3] = in_pipl1.E();
-          kf_e_[0] = kf_pimi0.E();
-          kf_e_[1] = kf_pimi1.E();
-          kf_e_[2] = kf_pipl0.E();
-          kf_e_[3] = kf_pipl1.E();
-          vtx.GetXYZ(vtx_);
-        }
-      } while (std::next_permutation(pl_perm.begin(), pl_perm.end()));
-    } while (std::next_permutation(mi_perm.begin(), mi_perm.end()));
-      out_tree->Fill();
+    if (!hypo.fillTrack("pi-_0", trackIndices_[0], *this))
+      continue;
+    if (!hypo.fillTrack("pi-_1", trackIndices_[1], *this))
+      continue;
+    if (!hypo.fillTrack("pi+_0", trackIndices_[2], *this))
+      continue;
+    if (!hypo.fillTrack("pi+_1", trackIndices_[3], *this))
+      continue;
+    hypo.optimize();
+    if (kf_err_ != 0 && kf_err_ != 2) {
+      kf_err_ = hypo.getErrorCode();
+    }
+    double tchi2 = hypo.getChiSquare();
+    if (tchi2 < kf_chi2_ && hypo.getErrorCode() == 0) {
+      kf_err_ = 0;
+      kf_chi2_ = tchi2;
+      auto in_pimi0 = hypo.getInitialMomentum("pi-_0");
+      auto in_pimi1 = hypo.getInitialMomentum("pi-_1");
+      auto in_pipl0 = hypo.getInitialMomentum("pi+_0");
+      auto in_pipl1 = hypo.getInitialMomentum("pi+_1");
+      auto kf_pimi0 = hypo.getFinalMomentum("pi-_0");
+      auto kf_pimi1 = hypo.getFinalMomentum("pi-_1");
+      auto kf_pipl0 = hypo.getFinalMomentum("pi+_0");
+      auto kf_pipl1 = hypo.getFinalMomentum("pi+_1");
+      auto vtx = hypo.getFinalVertex("vtx0");
+      in_p_[0][0] = in_pimi0.Px();
+      in_p_[0][1] = in_pimi0.Py();
+      in_p_[0][2] = in_pimi0.Pz();
+      in_p_[1][0] = in_pimi1.Px();
+      in_p_[1][1] = in_pimi1.Py();
+      in_p_[1][2] = in_pimi1.Pz();
+      in_p_[2][0] = in_pipl0.Px();
+      in_p_[2][1] = in_pipl0.Py();
+      in_p_[2][2] = in_pipl0.Pz();
+      in_p_[3][0] = in_pipl1.Px();
+      in_p_[3][1] = in_pipl1.Py();
+      in_p_[3][2] = in_pipl1.Pz();
+      kf_p_[0][0] = kf_pimi0.Px();
+      kf_p_[0][1] = kf_pimi0.Py();
+      kf_p_[0][2] = kf_pimi0.Pz();
+      kf_p_[1][0] = kf_pimi1.Px();
+      kf_p_[1][1] = kf_pimi1.Py();
+      kf_p_[1][2] = kf_pimi1.Pz();
+      kf_p_[2][0] = kf_pipl0.Px();
+      kf_p_[2][1] = kf_pipl0.Py();
+      kf_p_[2][2] = kf_pipl0.Pz();
+      kf_p_[3][0] = kf_pipl1.Px();
+      kf_p_[3][1] = kf_pipl1.Py();
+      kf_p_[3][2] = kf_pipl1.Pz();
+      in_e_[0] = in_pimi0.E();
+      in_e_[1] = in_pimi1.E();
+      in_e_[2] = in_pipl0.E();
+      in_e_[3] = in_pipl1.E();
+      kf_e_[0] = kf_pimi0.E();
+      kf_e_[1] = kf_pimi1.E();
+      kf_e_[2] = kf_pipl0.E();
+      kf_e_[3] = kf_pipl1.E();
+      vtx.GetXYZ(vtx_);
+    }
+    out_tree->Fill();
     }
   outfl->cd();
   out_tree->Write();

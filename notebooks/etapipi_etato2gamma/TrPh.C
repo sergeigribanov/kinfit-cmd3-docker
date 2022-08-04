@@ -56,8 +56,12 @@ Int_t TrPh::Cut(Long64_t entry) {
 }
 
 void TrPh::setupOutputBranches_(TTree* tree) {
+  tree->Branch("evnum", &evnum, "evnum/I");
+  tree->Branch("nph", &nph, "nph/I");
+  tree->Branch("numiters", &numiters_, "numiters_/I");
   tree->Branch("kf_err", &kf_err_, "kf_err/I");
   tree->Branch("kf_chi2", &kf_chi2_, "kf_chi2/D");
+  tree->Branch("kf_q", &kf_q_, "kf_q/D");
   tree->Branch("in_mgg", &in_mgg_, "in_mgg/D");
   tree->Branch("kf_mgg", &kf_mgg_, "kf_mgg/D");
   tree->Branch("in_mpipi", &in_mpipi_, "in_mpipi/D");
@@ -93,6 +97,7 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
     hypo.fixVertexParameter("vtx0", 0, xbeam);
     hypo.fixVertexParameter("vtx0", 1, ybeam);
     kf_err_ = 1;
+    numiters_ = -1;
     if (!hypo.fillTrack("pi-", trackIndices_[0], *this)) {
       out_tree->Fill();
       continue;
@@ -107,11 +112,12 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
       for (std::size_t jph = iph + 1; jph < photonIndices_.size(); ++jph) {
         if (!hypo.fillPhoton("g1", photonIndices_[jph], *this)) continue;
         hypo.optimize();
-        if (hypo.getErrorCode() != 0) continue;
         tchi2 = hypo.getChiSquare();
-        if (tchi2 >= kf_chi2_) continue;
-          kf_err_ = 0;
+        if (kf_err_ != 0 && kf_err_ != 2) {
+          numiters_ = hypo.getNumOfRequiredIters();
+          kf_err_ = hypo.getErrorCode();
           kf_chi2_ = tchi2;
+          kf_q_ = hypo.getdxTHdx() - 2. * tchi2;
           auto inP = hypo.getInitialMomentum(sAll);
           auto kfP = hypo.getFinalMomentum(sAll);
           inP.GetXYZT(in_total_p_);
@@ -124,6 +130,25 @@ void TrPh::Loop(const std::string& outpath, double magneticField) {
           vtx.GetXYZ(kf_vtx_);
           kf_ct_out_pipl_ = hypo.getParticleFinalParams("pi+")(5);
           kf_ct_out_pimi_ = hypo.getParticleFinalParams("pi-")(5);
+        }
+        if (hypo.getErrorCode() != 0) continue;
+        if (tchi2 >= kf_chi2_) continue;
+        numiters_ = hypo.getNumOfRequiredIters();
+        kf_err_ = hypo.getErrorCode();
+        kf_chi2_ = tchi2;
+        kf_q_ = hypo.getdxTHdx() - 2. * tchi2;
+        auto inP = hypo.getInitialMomentum(sAll);
+        auto kfP = hypo.getFinalMomentum(sAll);
+        inP.GetXYZT(in_total_p_);
+        kfP.GetXYZT(kf_total_p_);
+        in_mgg_ = hypo.getInitialMomentum(sGG).M();
+        kf_mgg_ = hypo.getFinalMomentum(sGG).M();
+        in_mpipi_ = hypo.getInitialMomentum(sPiPi).M();
+        kf_mpipi_ = hypo.getFinalMomentum(sPiPi).M();
+        auto vtx = hypo.getFinalVertex("vtx0");
+        vtx.GetXYZ(kf_vtx_);
+        kf_ct_out_pipl_ = hypo.getParticleFinalParams("pi+")(5);
+        kf_ct_out_pimi_ = hypo.getParticleFinalParams("pi-")(5);
       }
     }
     out_tree->Fill();

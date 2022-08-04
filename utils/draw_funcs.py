@@ -4,6 +4,9 @@ from ROOT import gDirectory
 import matplotlib
 import matplotlib.pyplot as plt
 import mplhep as hep
+import seaborn as sns
+import pandas as pd
+import matplotlib.cm as cm
 
 
 def figure_style1(func):
@@ -11,7 +14,7 @@ def figure_style1(func):
         plt.style.use([hep.style.CMS])
         matplotlib.rcParams['text.usetex'] = True
         matplotlib.rcParams['text.latex.preamble'] = r'''\usepackage{tabularx}
-        \usepackage{amsmath}'''
+        \usepackage{amsmath,amsfonts,amssymb,amsthm,bm}'''
         matplotlib.rcParams['font.sans-serif'] = ['Tahoma', 'DejaVu Sans',
                                                   'Lucida Grande', 'Verdana']
         # textwidth in pt to textwidth inches:
@@ -61,7 +64,7 @@ def draw_1d_hist(hist,
                  fontsize=11,
                  textwidth = 8,
                  fraction=1.,
-                 info_coords=(0.6, 0.7)):
+                 info_coords=(0.6, 0.9)):
     f, ax = plt.subplots(figsize=evaluate_figsize(textwidth, fraction))
     draw_hist_in_axis_(ax, hist, fontsize, info_coords)
     ax.set_xlabel(xlabel, fontsize=fontsize)
@@ -76,7 +79,11 @@ def draw_1d_hists(hists,
                   textwidth = 8,
                   fraction=1.,
                   info_coords=(0.6, 0.1),
-                  yscale='linear'):
+                  dh=0.3,
+                  dw=0.0,
+                  yscale='linear',
+                  legend_loc='best',
+                  bbox_to_anchor=None):
     lines = cycle(["-","--","-.",":"])
     linecolors = cycle([u'#1f77b4', u'#ff7f0e', u'#2ca02c',
                         u'#d62728', u'#9467bd', u'#8c564b',
@@ -84,6 +91,7 @@ def draw_1d_hists(hists,
     f, ax = plt.subplots(figsize=evaluate_figsize(textwidth, fraction))
     ax.tick_params(axis='both', which='major', labelsize=fontsize)
     dy = 0
+    dx = 0
     for histname, label in hists:
         hist = gDirectory.Get(histname)
         nbins = hist.GetNbinsX()
@@ -103,11 +111,19 @@ def draw_1d_hists(hists,
                stddev=hist.GetStdDev())
         textstr = textstr.replace('\n', ' ')
         textstr = "\n" + textstr
-        ax.text(info_coords[0], info_coords[1] + dy, textstr, transform=ax.transAxes, fontsize=fontsize,
+        ax.text(info_coords[0] + dx, info_coords[1] + dy, textstr, transform=ax.transAxes, fontsize=fontsize,
                 verticalalignment='bottom', bbox=props)
-        dy += 0.3
+        dx += dw
+        dy += dh
 
-    ax.legend(frameon=True, fontsize=fontsize)
+    if bbox_to_anchor is None:
+        ax.legend(frameon=True, fontsize=fontsize,
+                  loc=legend_loc)
+    else:
+        ax.legend(frameon=True, fontsize=fontsize,
+                  loc=legend_loc,
+                  bbox_to_anchor=bbox_to_anchor)
+
     ax.set_xlabel(xlabel, fontsize=fontsize)
     ax.set_ylabel(ylabel, fontsize=fontsize)
     ax.set_yscale(yscale)
@@ -139,11 +155,13 @@ def draw_2d_hist(histname,
     z_min, z_max = 0, np.abs(z).max()
     c = ax.pcolormesh(x, y, z, cmap=cmap, vmin=z_min, vmax=z_max)
     ax.axis([x.min(), x.max(), y.min(), y.max()])
-    fig.colorbar(c, ax=ax)
+    cbar = fig.colorbar(c, ax=ax)
+    cbar.ax.tick_params(labelsize=fontsize)
     ax.set_xlabel(xlabel, fontsize=fontsize)
     ax.set_ylabel(ylabel, fontsize=fontsize)
-    plt.gcf().subplots_adjust(left=0.2)
-    plt.gcf().subplots_adjust(bottom=0.25)
+    ax.tick_params(axis='both', which='major', labelsize=fontsize)
+    plt.gcf().subplots_adjust(left=0.25)
+    plt.gcf().subplots_adjust(bottom=0.26)
 
 
 @figure_style1
@@ -156,7 +174,9 @@ def draw_scatter(
         ylabel='',
         fontsize=11,
         textwidth = 8,
-        fraction=1.):
+        fraction=1.,
+        marker_size=0.1,
+        rasterized=True):
     tree = gDirectory.Get(tree_name)
     lst = gDirectory.Get(entry_list_name)
     n = lst.GetN()
@@ -168,7 +188,45 @@ def draw_scatter(
         y.append(getattr(tree, yname))
 
     fig, ax = plt.subplots(figsize=evaluate_figsize(textwidth, fraction))
-    ax.scatter(x, y, s=0.1)
+    ax.scatter(x, y, s=marker_size, rasterized=rasterized, alpha=0.05)
+    ax.tick_params(axis='both', which='major', labelsize=fontsize)
+    ax.set_xlabel(xlabel, fontsize=fontsize)
+    ax.set_ylabel(ylabel, fontsize=fontsize)
+    plt.gcf().subplots_adjust(left=0.2)
+    plt.gcf().subplots_adjust(bottom=0.25)
+
+
+@figure_style1
+def draw_2d_hist2(hist_name,
+                  xlabel='',
+                  ylabel='',
+                  fontsize=11,
+                  textwidth = 8,
+                  fraction=1.,
+                  bins=(128, 128),
+                  cmap=cm.jet,
+                  clip=((-np.inf, np.inf), (-np.inf, np.inf)),
+                  norm=None):
+    hist = gDirectory.Get(hist_name)
+    nx = hist.GetNbinsX()
+    ny = hist.GetNbinsY()
+    x = np.empty((0,), dtype=np.float64)
+    y = np.empty((0,), dtype=np.float64)
+    for binX in range(1, nx+1):
+        for binY in range(1, ny+1):
+            if hist.GetBinContent(binX, binY) > 1.e-3:
+                x = np.append(x, hist.GetXaxis().GetBinCenter(binX))
+                y = np.append(y, hist.GetYaxis().GetBinCenter(binY))
+
+
+    ind = (x > clip[0][0]) & (x < clip[0][1]) & (y > clip[1][0]) & (y < clip[1][1])
+    x = x[ind]
+    y = y[ind]
+    fig, ax = plt.subplots(figsize=evaluate_figsize(textwidth, fraction))
+    h = ax.hist2d(x, y, bins=bins, norm=norm, cmap=cmap, rasterized=True)
+    cbar = fig.colorbar(h[3], ax=ax)
+    cbar.ax.tick_params(labelsize=fontsize)
+    ax.tick_params(axis='both', which='major', labelsize=fontsize)
     ax.set_xlabel(xlabel, fontsize=fontsize)
     ax.set_ylabel(ylabel, fontsize=fontsize)
     plt.gcf().subplots_adjust(left=0.2)
@@ -194,7 +252,9 @@ def vertices_plot2(hists,
                    fontsize=11,
                    textwidth = 8,
                    fraction=1.,
-                   info_coords=(0.6, 0.8)):
+                   info_coords=(0.6, 0.8),
+                   hspace=0.2,
+                   wspace=0.2):
     f, axes = plt.subplots(3, 2, sharex=True,
                            figsize=evaluate_figsize(textwidth, fraction, subplots=(3, 2)))
     xlabels = [[r'$x_1$ (cm)', r'$x_2$ (cm)'],
@@ -207,6 +267,8 @@ def vertices_plot2(hists,
                                info_coords, False)
             axes[row, col].set_xlabel(xlabels[row][col], fontsize=fontsize)
 
+    f.subplots_adjust(hspace=hspace, wspace=wspace)
+
 
 @figure_style1
 def draw_chi2_gaussian_sim(hist,
@@ -216,18 +278,21 @@ def draw_chi2_gaussian_sim(hist,
                            fontsize=11,
                            textwidth = 8,
                            fraction=1.,
-                           info_coords=(0.3, 0.7)):
+                           info_coords=(0.3, 0.7),
+                           dh=-0.1,
+                           dw=0.0,
+                           x_max=29):
     f, ax = plt.subplots(figsize=evaluate_figsize(textwidth, fraction))
     draw_hist_in_axis_(ax, hist, fontsize, info_coords)
     tf1 = gDirectory.Get(hist).GetFunction(tf1_fcn)
     f = np.vectorize(lambda x: tf1.Eval(x))
-    xv = np.linspace(1.e-3, 29, 10000)
+    xv = np.linspace(1.e-3, x_max, 10000)
     yv = f(xv)
     ax.plot(xv, yv, linestyle='--', color=u'#ff7f0e')
     props = dict(boxstyle='square', facecolor='white', edgecolor=u'#ff7f0e',
                  linestyle='--')
     textstr = r'''\hspace{{-0.5em}}\begin{{tabular}}{{l l}}
-    Amplitude parameter & {ampl:.0f}$\pm${ampl_err:.0f}\\
+    $N$ & {ampl:.0f}$\pm${ampl_err:.0f}\\
     NDF parameter & {ndf:.4f}$\pm${ndf_err:.4f}\\
     $\chi^2$/NDF & {fit_chi2:.4f}/{fit_ndf:.0f}
     \end{{tabular}}
@@ -239,8 +304,8 @@ def draw_chi2_gaussian_sim(hist,
                fit_ndf=tf1.GetNDF())
     textstr = textstr.replace('\n', ' ')
     textstr = "\n" + textstr
-    tx = info_coords[0]
-    ty = info_coords[0] - 0.1
+    tx = info_coords[0] + dw
+    ty = info_coords[1] + dh
     ax.text(tx, ty, textstr, transform=ax.transAxes, fontsize=fontsize,
             verticalalignment='bottom', bbox=props)
     ax.set_xlabel(xlabel, fontsize=fontsize)

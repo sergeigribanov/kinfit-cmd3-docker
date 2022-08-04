@@ -21,7 +21,7 @@ bool TrPh::cutPhotons_() {
       photonIndices_.push_back(i);
     }
   }
-  if (photonIndices_.size() < 3) {
+  if (photonIndices_.size() != 3) {
     return false;
   }
   return true;
@@ -41,37 +41,62 @@ void TrPh::setupOutputBranches_(TTree *tree) {
   tree->Branch("kf_vtx", kf_vtx_, "kf_vtx[3]/D");
   tree->Branch("in_total_p", in_total_p_, "in_total_p[4]/D");
   tree->Branch("kf_total_p", kf_total_p_, "kf_total_p[4]/D");
+  tree->Branch("sim_ee_vtx_z", &sim_ee_vtx_z_, "sim_ee_vtx_z/D");
+}
+
+void TrPh::fillSimInfo_() {
+  bool flag = false;
+  for (int i = 0; i < nsim; ++i) {
+    switch (simorig[i]) {
+    case 0:
+      sim_ee_vtx_z_ = simvtz[i];
+      flag = true;
+      break;
+    default:
+      break;
+  }
+    if (flag) break;
+  }
 }
 
 void TrPh::fit_(Hypo3PhotonsCustom *hypo) {
   double tchi2;
   kf_chi2_ = std::numeric_limits<double>::infinity();
+  fillSimInfo_();
   for (std::size_t iph = 0; iph + 2 < photonIndices_.size(); ++iph)
     for (std::size_t jph = iph + 1; jph + 1 < photonIndices_.size(); ++jph)
       for (std::size_t kph = jph + 1; kph < photonIndices_.size(); ++kph) {
-        if (!hypo->fillPhoton("g0", photonIndices_[iph], *this)) continue;
-        if (!hypo->fillPhoton("g1", photonIndices_[jph], *this)) continue;
-        if (!hypo->fillPhoton("g2", photonIndices_[kph], *this)) continue;
-        hypo->optimize();
-        kf_err_ = 1;
-        if (hypo->getErrorCode() != 0) continue;
-        kf_err_ = 0;
-        tchi2 = hypo->getChiSquare();
-        if (tchi2 >= kf_chi2_) continue;
-        kf_chi2_ = tchi2;
-        in_mgg_[0] = hypo->getInitialMomentum(s_phpair0_).M();
-        in_mgg_[1] = hypo->getInitialMomentum(s_phpair1_).M();
-        in_mgg_[2] = hypo->getInitialMomentum(s_phpair2_).M();
-        kf_mgg_[0] = hypo->getFinalMomentum(s_phpair0_).M();
-        kf_mgg_[1] = hypo->getFinalMomentum(s_phpair1_).M();
-        kf_mgg_[2] = hypo->getFinalMomentum(s_phpair2_).M();
-        auto vtx = hypo->getFinalVertex("vtx0");
-        vtx.GetXYZ(kf_vtx_);
-        auto in_p_total =  hypo->getInitialMomentum(s_all_photons_);
-        in_p_total.GetXYZT(in_total_p_);
-        auto kf_p_total = hypo->getFinalMomentum(s_all_photons_);
-        kf_p_total.GetXYZT(kf_total_p_);
-      }
+    if (!hypo->fillPhoton("g0", photonIndices_[iph], *this))
+      continue;
+    if (!hypo->fillPhoton("g1", photonIndices_[jph], *this))
+      continue;
+    if (!hypo->fillPhoton("g2", photonIndices_[kph], *this))
+      continue;
+    hypo->optimize();
+    kf_err_ = 1;
+    if (hypo->getErrorCode() != 0)
+      continue;
+    kf_err_ = 0;
+    tchi2 = hypo->getChiSquare();
+    if (tchi2 >= kf_chi2_)
+      continue;
+    kf_chi2_ = tchi2;
+    in_mgg_[0] = hypo->getInitialMomentum(s_phpair0_).M();
+    in_mgg_[1] = hypo->getInitialMomentum(s_phpair1_).M();
+    in_mgg_[2] = hypo->getInitialMomentum(s_phpair2_).M();
+    kf_mgg_[0] = hypo->getFinalMomentum(s_phpair0_).M();
+    kf_mgg_[1] = hypo->getFinalMomentum(s_phpair1_).M();
+    kf_mgg_[2] = hypo->getFinalMomentum(s_phpair2_).M();
+    auto vtx = hypo->getFinalVertex("vtx0");
+    vtx.GetXYZ(kf_vtx_);
+    auto in_p_total = hypo->getInitialMomentum(s_all_photons_) -
+      hypo->getInitialMomentum("origin");
+    in_p_total.GetXYZT(in_total_p_);
+    auto kf_p_total =
+      hypo->getFinalMomentum(s_all_photons_) -
+      hypo->getFinalMomentum("origin");
+    kf_p_total.GetXYZT(kf_total_p_);
+  }
 }
 
 void TrPh::Loop(const std::string& outpath, double mfield) {

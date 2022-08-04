@@ -107,9 +107,8 @@ void TrPh::Loop(const std::string &outpath, double magneticField) {
   if (fChain == 0) return;
   auto outfl = TFile::Open(outpath.c_str(), "recreate");
   fChain->GetEntry(0);
-  TH1F chi2Hist("kf_chi2", "", 512, 0, 128);
+  TH1F chi2Hist("kf_chi2", "", 128, 0, 24);
   kfcmd::hypos::Hypo2ChPions2Photons hypo(2.e-3 * emeas, magneticField, 100, 1.e-8);
-  hypo.disableConstraint("#momentum-constraint-em-vtx0-pe");
   Long64_t nentries = fChain->GetEntriesFast();
   Long64_t nb = fChain->GetEntry(entry_);
   if (Cut(entry_) < 0) {
@@ -120,13 +119,14 @@ void TrPh::Loop(const std::string &outpath, double magneticField) {
   }
   hypo.setBeamXY(xbeam, ybeam);
   hypo.fixVertexParameter("vtx0", 0, xbeam);
-  hypo.fixVertexParameter("vtx0", 0, ybeam);
+  hypo.fixVertexParameter("vtx0", 1, ybeam);
   if (!fitOnce_(&hypo)) {
     std::cout << "[!] Fit isn't converged" << std::endl;
     outfl->Close();
     delete outfl;
     return;
   }
+  hypo.disableConstraint("#momentum-constraint-em-vtx0-pe");
   for (int event = 0; event < nevents_; ++event) {
     refit_(&hypo, &chi2Hist);
   }

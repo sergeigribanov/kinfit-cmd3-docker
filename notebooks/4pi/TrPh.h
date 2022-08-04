@@ -22,6 +22,7 @@ class TrPh : public kfcmd::core::TrPh {
  private:
   bool cutTracks_();
   void setupOutputBranches_(TTree*);
+  void fillSimInfo_();
   static const double dZ_;
   static const double dRho_;
   static const double mindEdX_;
@@ -37,6 +38,7 @@ class TrPh : public kfcmd::core::TrPh {
   double kf_p_[4][3];
   double kf_e_[4];
   double vtx_[3];
+  double sim_ee_vtx_z_;
   std::vector<std::size_t> trackIndices_;
 };
 #endif

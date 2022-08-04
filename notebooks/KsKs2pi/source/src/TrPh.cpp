@@ -86,7 +86,7 @@ void TrPh::setupOutputBranches_(TTree *tree) {
       std::vector<int> mi_perm = {0, 1, 2};
       kf_err_ = 1;
       kf_chi2_ = std::numeric_limits<double>::infinity();
-      do {
+      for (int c=0; c<3; ++c) {
         std::vector<int> pl_perm = {3, 4, 5};
         do {
           if (!hypo.fillTrack("pi-_0", trackIndices_[mi_perm[0]], *this))
@@ -111,11 +111,13 @@ void TrPh::setupOutputBranches_(TTree *tree) {
           tmpv << ks2P.Px(), ks2P.Py(), ks2P.Pz(), 1.e-3;
           hypo.setInitialParticleParams("ks2", tmpv);
           hypo.optimize();
-          if (hypo.getErrorCode() != 0)
-            continue;
-          kf_err_ = 0;
+          if (kf_err_ != 0 && kf_err_ != 2) {
+            kf_err_ = hypo.getErrorCode();
+          }
+          if (hypo.getErrorCode() != 0) continue;
           double tchi2 = hypo.getChiSquare();
           if (tchi2 < kf_chi2_) {
+            kf_err_ = hypo.getErrorCode();
             kf_chi2_ = tchi2;
             in_mks1_ = hypo.getInitialMomentum(sKs1_).M();
             in_mks2_ = hypo.getInitialMomentum(sKs2_).M();
@@ -131,7 +133,8 @@ void TrPh::setupOutputBranches_(TTree *tree) {
             vtx2_dr_ = (vtx2 - vtx0).Mag();
           }
         } while (std::next_permutation(pl_perm.begin(), pl_perm.end()));
-      } while (std::next_permutation(mi_perm.begin(), mi_perm.end()));
+        std::rotate(mi_perm.begin(), mi_perm.begin() + 1, mi_perm.end());
+      }
       out_tree->Fill();
     }
     outfl->cd();
