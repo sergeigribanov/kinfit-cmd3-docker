@@ -74,8 +74,10 @@ void TrPh::fit_(Hypo3PhotonsCustom *hypo) {
       continue;
     hypo->optimize();
     kf_err_ = 1;
-    if (hypo->getErrorCode() != 0)
-      continue;
+    if (hypo->getErrorCode() != 0) {
+        if (hypo->getErrorCode() != 1) kf_err_ = hypo->getErrorCode();
+        continue;
+    }
     kf_err_ = 0;
     tchi2 = hypo->getChiSquare();
     if (tchi2 >= kf_chi2_)

@@ -6,7 +6,7 @@ import ROOT
 
 
 def build_custom_hypo(hypo_cpp_path,
-                      rootlogon_path='/home/hep/packages/kfcmd/share/kfcmd/rootlogon.C'):
+                      rootlogon_path='/home/hep/packages/kfcmd_tr_ph_v9/share/kfcmd/rootlogon.C'):
     out = widgets.Output(layout={'border': '1px solid black'})
     display(out)
     with out:
@@ -24,7 +24,8 @@ def run_kinfit(
         input_path,
         output_path='test.root',
         mfield=1.3,
-        rootlogon_path='/home/hep/packages/kfcmd/share/kfcmd/rootlogon.C'):
+        tr_ph_path='TrPh.C',
+        rootlogon_path='/home/hep/packages/kfcmd_tr_ph_v9/share/kfcmd/rootlogon.C'):
     varibles = locals()
     out = widgets.Output(layout={'border': '1px solid black'})
     display(out)
@@ -36,9 +37,9 @@ def run_kinfit(
 
     ROOT.gInterpreter.ProcessLine('gROOT->LoadMacro("{}")'.format(rootlogon_path))
     with out:
-        print('Building: .L TrPh.C++')
+        print('Building: .L {}++'.format(tr_ph_path))
 
-    ROOT.gInterpreter.ProcessLine(".L TrPh.C++")
+    ROOT.gInterpreter.ProcessLine(".L {}++".format(tr_ph_path))
     with out:
         print('Opening input file: {}'.format(input_path))
 

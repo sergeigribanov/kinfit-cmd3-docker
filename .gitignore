@@ -1,3 +1,4 @@
+*~
 *_C.d
 *_C.so
 *_cpp.d
@@ -9,3 +10,6 @@
 rootlogon.C
 *build/
 *install/
+*_dictUmbrella.h
+*_dictContent.h
+*.ipynb_checkpoints
